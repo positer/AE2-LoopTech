@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.1
+
+### English
+
+- Minecraft 26.1.2: Fixed a client crash when resizing a window with Just Enough Items and Just Enough Filters visible in the Handheld Loop Factory Encoder or another inventory screen. Invalid item previews are skipped; normal previews are unchanged.
+- Minecraft 1.21.1: Version alignment only. This release has no gameplay changes on 1.21.1.
+
+### 简体中文
+
+- Minecraft 26.1.2：修复同时启用 JEI 和 Just Enough Filters 时，在手持循环工厂编码器等容器界面调整窗口大小可能导致客户端崩溃的问题。现在会跳过尺寸无效的物品预览，正常预览不受影响。
+- Minecraft 1.21.1：仅同步版本号，本版无玩法变更。
+
 ## 0.1.0
 
 ### English
