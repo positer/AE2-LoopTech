@@ -196,6 +196,8 @@
   "gui.ae2lpt.omni.private": "私有",
   "gui.ae2lpt.omni.visibility": "频道可见性",
   "gui.ae2lpt.omni.visibility.hint": "锁定：仅你可查看与加入该频道",
+  "gui.ae2lpt.loop_integrated_cpu.status": "合成 CPU 状态",
+  "block.ae2lpt.loop_integrated_cpu": "循环集成CPU",
   "block.ae2lpt.loop_ticker": "循环进刻器",
   "block.ae2lpt.loop_condenser": "循环物质聚合器",
   "gui.ae2lpt.loop_ticker.rate": "倍率",

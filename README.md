@@ -25,6 +25,12 @@ The housing uses glass in the four corners, iron ingots at middle left and right
 
 For portable access, combine an ME Chest and an Energy Cell with the matching Loop Storage Cell. Finite tiers also accept the matching core and housing in place of the assembled cell. The portable cell opens its own ME storage screen and uses a rechargeable AE battery. Energy Cards expand the battery. Sneak-use an empty portable cell to disassemble it and recover the parts and remaining charge. Where FE storage is available, install a Loop Card to use stored FE to recharge the portable cell. A Loop Card is a shapeless combination of an Advanced Card and a Loop Crystal.
 
+### Loop Integrated CPU
+
+Use the 20 storage-cell slots to configure a native AE2 crafting CPU. Item cells add their rated bytes to crafting storage. Fluid cells add one co-processor per 256 rated bytes. A 256k fluid cell adds 1,024 co-processors. Loop cells and Quantum Omni cells contribute to both totals using their rated tier. A disk's contents and partition do not change its contribution. Right-click to manage the cells. On an active CPU, use the top-right tab or sneak-right-click to open the native crafting status.
+
+In a crafting table, put iron ingots in the corners, Loop Crystals at top center, middle left and middle right, an AE2 Crafting Unit at the center and an ME Drive at bottom center.
+
 ### Crafting orders
 
 - **Supercomputing Crafting Optimizer Interface.** Connect it to the grid that serves your crafting CPU. The interface uses one channel and 8 AE/t for its active crafting service. It plans acyclic orders in dependency order and accounts for shared ingredients, byproducts and container returns. The grid gets one capacity bonus even with multiple interfaces. Under default rules, the controllerless limit and ordinary cable capacity rise from 8 to 16, and dense cable and controller-face capacity rise from 32 to 64. The network still needs power.
@@ -36,6 +42,8 @@ For portable access, combine an ME Chest and an Energy Cell with the matching Lo
 
 - **Loop Tick Accelerator.** Aim the block’s green top at the target. It can face any of the six directions. Craft the block alone to turn it into a cable part, or craft the part alone to get the block back. A mounted part targets the block directly in front of its mounted face. Right-click with an empty hand to open the rate controls. An online accelerator adds 1–4 calls per tick by default. Each Acceleration Card doubles the upper limit, up to 64 with four cards. Multiple block or part accelerators add their selected rates. Two units set to 2 and 3 add five calls to an eligible target each tick alongside its normal ticking. Actual throughput also depends on the target’s inputs, power and internal limits.
 - **Loop Matter Condenser.** Use a Cell Workbench to partition a Loop Storage Cell with the items you want to process. Place the cell in the condenser’s template slot, connect an active ME channel and choose the native matter-ball, singularity or trash mode. It takes matching items from ME storage every server tick and returns products to the network. An Inverter Card on the template cell excludes marked items and a Fuzzy Card enables fuzzy matching. If the network cannot take a product, the condenser retains its matter credit for later. You can also use the native manual inputs.
+
+If Applied Flux is installed, each accelerator accepts one Induction Card in its dedicated upgrade slot. Feed Forge Energy at the block's green face or the cable part's exposed mounting face to power the ME network. Each port accepts up to 2,147,483,647 FE per tick, subject to available ME energy capacity.
 
 ### Programmable Loop Factory
 
@@ -113,6 +121,12 @@ END
 
 便携版用 ME 箱子、能源元件和对应的循环存储磁盘合成。有限档也可以用同档核心和外壳代替成品磁盘。便携磁盘有独立的 ME 界面和可充电的 AE 电池，能量卡可以扩容。潜行使用空盘可拆回部件并回收剩余电量。具有 FE 存储支持时，可以插入循环卡，让盘内 FE 为便携磁盘充电。循环卡由高级卡和循环水晶无序合成。
 
+### 循环集成 CPU
+
+右键打开两组共 20 个磁盘槽。物品磁盘按面值提供合成存储，流体磁盘每 256 字节提供一个协处理器，所以 256k 流体盘提供 1,024 个。循环磁盘和 Quantum Omni 量子盘按标称档位同时贡献两项数值。磁盘内的资源和分区不影响贡献。在线时可点击右上角标签或潜行右键打开 AE2 原生合成状态。
+
+工作台四角放铁锭，上中、左中、右中放循环水晶，正中放 AE2 合成单元，下中放 ME 磁盘驱动器。
+
 ### 自动合成订单
 
 - **超算合成优化接口。** 接入合成 CPU 所在网络。在线合成服务占一个频道，消耗 8 AE/t，按依赖顺序规划无环订单，并计入共用原料、副产物和返还容器。默认模式下，无控制器网络的总频道数和普通线缆容量由 8 增至 16，致密线缆和控制器单面由 32 增至 64。每个网络获得一次加成，设备仍需正常供电。
@@ -124,6 +138,8 @@ END
 
 - **循环进刻器。** 将方块的绿色顶面对准目标，支持六向旋转。把方块单独放入合成格可换成线缆部件，把部件单独合成可换回方块。线缆部件加速安装面正前方的相邻方块。空手右键打开倍率界面。在线时默认每 tick 追加 1–4 次调用，每张加速卡让倍率上限翻倍，四张最高 64。多台方块或部件对准同一目标时，追加次数相加。例如分别设置为 2 和 3，每 tick 共追加 5 次，目标本身照常运行。实际产量还受机器的原料、电力和内部限制影响。
 - **循环物质聚合器。** 先在元件工作台为循环磁盘标记要处理的物品，再把磁盘放入模板槽。给机器接上可用的 ME 频道，选择物质球、奇点或销毁模式。聚合器逐 tick 从网络抽取匹配物品，并将产物送回网络。在模板磁盘上装反相卡可排除标记物品，装模糊卡可使用模糊匹配。网络暂时装不下产物时会保留物质余额，等有空间后再结算。也可以使用机器的原生手动输入。
+
+装有 Applied Flux 时，两种进刻器各有一个专用感应卡槽。方块从绿色面接收 FE，部件从安装面接收 FE，并按 AE2 的换算率为 ME 网络供电。每个端口每 tick 最多接收 2,147,483,647 FE，实际输入取决于网络剩余储能空间。
 
 ### 可编程循环工厂
 
@@ -175,3 +191,8 @@ END
 2. 在各端点放置连接器并接入要互联的 ME 网络。右键打开频道界面，输入名称并创建或加入频道。锁形开关选择可见性，公开频道供所有玩家加入，私有频道供创建者加入。
 3. 在另一端选择同名频道。端点可以跨同一存档的不同维度，双方均加载时加入同一个 ME 网络，按原生规则分配频道和处理控制器冲突。连接器自身零待机耗电，也不占用设备频道。卸载的端点会暂时离开，区块重新加载后恢复。解绑一端时，频道仍供其他端点使用。
 4. 为循环工厂建立无线连接时，将连接器贴在循环工厂网络终端正上方，或贴在子网箭头朝上的工厂样板供应器正上方。所选频道接入机器的主网，供应器子网仍独立分配频道和存储。用 AE2 扳手拆下连接器后，同一存档内重新放置可沿用频道绑定。
+
+
+### 美术来源 / Art attribution
+
+循环集成 CPU 重着色贴图与移位槽框底图改编自 Applied Energistics 2（© Ridanisaurus Rid、AlgorithmX2 等），适用 CC BY-NC-SA 3.0。 [AE2 美术许可](https://github.com/AppliedEnergistics/Applied-Energistics-2#license) · [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/)

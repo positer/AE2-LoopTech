@@ -136,6 +136,7 @@ public final class RuntimeRipperProbe {
             output = Path.of(System.getProperty("ae2lo.probe.reportDir",
                     System.getProperty("ae2lo.probe.output", "ae2lo-probe-evidence"))).toAbsolutePath();
             Files.createDirectories(output);
+            if (IntegratedCpuFixture.ENABLED) { IntegratedCpuFixture.start(server, player, output); return; }
             if (MachineAudit.ENABLED) { MachineAudit.start(server, player, output); return; }
             if (OmniProbe.ENABLED) { OmniProbe.start(server, player, output); return; }
             if (FactoryWirelessProbe.ENABLED) { FactoryWirelessProbe.start(server, player, output); return; }
@@ -191,6 +192,7 @@ public final class RuntimeRipperProbe {
 
     private static void onTick(ServerTickEvent.Post event) {
         if (level == null || ProbeState.finished) return;
+        if (IntegratedCpuFixture.ENABLED) { IntegratedCpuFixture.tick(); return; }
         if (MachineAudit.ENABLED) { MachineAudit.tick(); return; }
         if (OmniProbe.ENABLED) { OmniProbe.tick(); return; }
         if (FactoryWirelessProbe.ENABLED) { FactoryWirelessProbe.tick(); return; }

@@ -5,6 +5,7 @@ import appeng.api.upgrades.IUpgradeInventory;
 /** Common view of the loop ticker whether it is a block or a cable part. */
 public interface LoopTickerHost {
     int MAX_CARDS = 4;
+    int INDUCTION_SLOT = MAX_CARDS;
 
     int rate();
 

@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "formed=false": {
+      "model": "ae2lpt:block/loop_integrated_cpu"
+    },
+    "formed=true,powered=false": {
+      "model": "ae2lpt:block/loop_integrated_cpu_offline"
+    },
+    "formed=true,powered=true": {
+      "model": "ae2lpt:block/loop_integrated_cpu_online"
+    }
+  }
+}

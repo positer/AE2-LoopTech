@@ -6,6 +6,14 @@ AE2 LoopTech（应用能源：循环科技，AE2LT）的双语项目主页位于
 
 两代 `integration/LoopTickerTarget.java` 执行朝向目标的追加 tick。部件通过 AE2 网格调度，方块通过现有服务器 tick 服务调用。六向方块模型、物品模型和工作台贴图由 `tools/verify_loop_machine_assets.py` 对照同代 AE2 校验。
 
+## 2026-11-26 循环集成 CPU 和进刻器 FE 输入
+
+- 两代 `block/LoopIntegratedCpuBlock.java` 沿用原生合成单元结构和交互，其中普通右键打开 20 槽磁盘菜单。对应方块实体保存磁盘并汇总标称容量，`mixin/IntegratedCpuCalculatorMixin.java` 、`IntegratedCpuClusterMixin.java` 和 `IntegratedCpuDiscoveryMixin.java` 分别接入成形、动态容量和原生 CPU 发现。
+- `menu/LoopIntegratedCpuMenu.java`、`client/LoopIntegratedCpuScreen.java` 使用原生限制槽和界面基类。两组槽位和背景对应 ExtendedAE 驱动器。资源入口为 `assets/ae2/screens/ae2lpt_loop_integrated_cpu.json`。
+- `client/LoopIntegratedCpuModel.java` 和 `assets/ae2lpt/textures/block/loop_integrated_cpu/` 提供在线、离线、结构不成形与连接材质。配方和掉落分别由同名工作台配方和战利品表定义。
+- `integration/LoopTickerPower.java` 注册方块和部件的 FE 能力，使用原生能量适配器和 AE2 换算。原有升级库存增加一个感应卡专用位置。
+- `tools/runtime-ripper-probe/<generation>/…/IntegratedCpuFixture.java` 检查真实网格、原生合成、两种进刻器供电并请求界面帧。复现入口为 `verify-background.ps1 -Chain integrated_cpu`。
+
 ## 2026-11-17 循环机器独立验收树
 
 - `docs/loop-machines.md`：聚合器的网络与离线流程、磁盘分区、回网背压，进刻器的倍率、卡槽、追加 tick 与共存边界；包含两代复现命令。

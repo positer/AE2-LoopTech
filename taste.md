@@ -30,6 +30,9 @@
 - Treat reversible compression/decompression as conversion of existing material, not a source of net growth. Recognize conservation from exact recipe ratios without item-ID exceptions, and preserve mixed plans that consume available compressed stock before crafting the remaining demand.
 - Keep gameplay acceptance helpers outside production source sets and JARs. Launch new isolated PCL worlds, verify exact inputs/outputs and real native CPU calls, capture the framebuffer, and preserve existing saves. Cached network power estimates are not an exact per-call energy meter.
 
+- 可更换的磁盘按标称容量为原生合成 CPU 提供资源，换盘只更新贡献值，保留现有集群和订单。
+- 定向 FE 验收使用同代原生能力并比较模拟、提交及真实可抽取 AE，聚合储能表读数可能延迟。
+
 - Prefer small, explicit version adapters over conditional branches scattered through feature code.
 - Keep registry names stable, lowercase, and namespaced under the final mod ID.
 - Treat server state as authoritative; client code renders and requests actions.

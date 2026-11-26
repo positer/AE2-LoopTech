@@ -1,0 +1,6 @@
+Loop Integrated CPU textures and drive background
+Adapted from Applied Energistics 2 by recoloring crafting unit textures and
+repositioning the drive slot recesses.
+Original textures: (c) 2020 Ridanisaurus Rid and (c) 2013-2020 AlgorithmX2 et al.
+Source: https://github.com/AppliedEnergistics/Applied-Energistics-2
+License: https://creativecommons.org/licenses/by-nc-sa/3.0/

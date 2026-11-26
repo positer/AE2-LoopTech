@@ -1,8 +1,9 @@
 param(
     [Parameter(Mandatory=$true)][ValidateSet('1.21.1','26.1.2')][string]$Generation,
-    [Parameter(Mandatory=$true)][ValidateSet('omni','omni_access','ae2lt_capacity','factory_wireless','template','channel_capacity','smithing','layered','core256m','catalog_audit','native_catalog','exact_components','pack_catalog','tool_components','loop_condenser','loop_ticker','machine_audit','omni_memory_card','loop_ticker_part')][string]$Chain,
+    [Parameter(Mandatory=$true)][ValidateSet('omni','omni_access','ae2lt_capacity','factory_wireless','template','channel_capacity','smithing','layered','core256m','catalog_audit','native_catalog','exact_components','pack_catalog','tool_components','loop_condenser','loop_ticker','machine_audit','omni_memory_card','loop_ticker_part','integrated_cpu')][string]$Chain,
     [Parameter(Mandatory=$true)][ValidatePattern('^ripper-[A-Za-z0-9_.-]+$')][string]$EvidenceName,
     [string]$EvidenceRoot,
+    [string[]]$AdditionalMods = @(),
     [switch]$PrepareOnly,
     [switch]$ValidateExisting,
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9_.-]*$')][string]$ValidationName
@@ -98,10 +99,10 @@ function Assert-RuntimeMatchesProduction {
 function Assert-GameplayEvidence([string]$world) {
     $report = Read-PassingFixture 'report.json'
     if ($report.minecraft -ne $Generation -or $report.world -ne $world) { throw 'Report generation/world is not this run' }
-    $chainNames = @{omni='omni_connector';omni_access='omni_access';ae2lt_capacity='ae2lt_capacity';factory_wireless='factory_wireless';channel_capacity='channel_capacity';template='template_growth';smithing='template_growth_then_netherite_pickaxe_smithing';layered='logs_planks_sticks_tool_and_template_growth_then_smithing';core256m='all_ten_core_tiers_crystal_growth_and_netherite_ingots';native_catalog='native_catalog_map_extension';exact_components='exact_components';catalog_audit='catalog_audit';pack_catalog='pack_catalog';loop_condenser='loop_condenser';loop_ticker='loop_ticker';machine_audit='machine_audit';omni_memory_card='omni_memory_card';loop_ticker_part='loop_ticker_part';tool_components='tool_components'}
+    $chainNames = @{omni='omni_connector';omni_access='omni_access';ae2lt_capacity='ae2lt_capacity';factory_wireless='factory_wireless';channel_capacity='channel_capacity';template='template_growth';smithing='template_growth_then_netherite_pickaxe_smithing';layered='logs_planks_sticks_tool_and_template_growth_then_smithing';core256m='all_ten_core_tiers_crystal_growth_and_netherite_ingots';native_catalog='native_catalog_map_extension';exact_components='exact_components';catalog_audit='catalog_audit';pack_catalog='pack_catalog';loop_condenser='loop_condenser';loop_ticker='loop_ticker';machine_audit='machine_audit';omni_memory_card='omni_memory_card';loop_ticker_part='loop_ticker_part';integrated_cpu='integrated_cpu';tool_components='tool_components'}
     if ($report.chain -ne $chainNames[$Chain]) { throw 'The requested chain is not the completed fixture' }
     # 0.0.6 removed the ripper's own idle drain; older evidence keeps its recorded 5 AE/t.
-    if ($Chain -notin @('omni','omni_access','ae2lt_capacity','factory_wireless','machine_audit','loop_ticker_part') -and $report.ripperConfiguredIdleAEPerTick -ne 0) { throw 'Ripper idle drain is not zero' }
+    if ($Chain -notin @('omni','omni_access','ae2lt_capacity','factory_wireless','machine_audit','loop_ticker_part','integrated_cpu') -and $report.ripperConfiguredIdleAEPerTick -ne 0) { throw 'Ripper idle drain is not zero' }
     if ($Chain -eq 'omni_access' -and $report.ripperIdlePower -ne 0) { throw 'Ripper idle drain is no longer zero' }
     if ($Chain -eq 'omni') {
         foreach ($check in @('four_loaded_endpoints','one_star_hub','connected_without_power','connectors_require_no_channels',
@@ -241,7 +242,22 @@ function Assert-GameplayEvidence([string]$world) {
             throw 'Machine acceptance checks missing or failed'
         }
     }
-    $requiredFrames = if ($Chain -eq 'machine_audit') { @('ae2lo-ripper-machine-ticker-ui.png','ae2lo-ripper-machine-condenser-ui.png') }
+    if ($Chain -eq 'integrated_cpu') {
+        $cpuSlots = Get-Content -LiteralPath (Join-Path $evidence 'cpu-menu-slots.json') -Raw
+        $referenceSlots = Get-Content -LiteralPath (Join-Path $evidence 'extended-drive-slots.json') -Raw
+        if ($cpuSlots -ne $referenceSlots -or @((ConvertFrom-Json -InputObject $cpuSlots)).Count -ne 20) {
+            throw 'Native screen slot geometry differs from the extended ME drive'
+        }
+        if ($report.nativeAutoSelectedCpu -ne $true -or $report.nativePlanksCrafted -ne 32 -or $report.bytesWithCells -ne 6144 -or
+                $report.coprocessorsWithCells -ne 1032 -or $report.quantumDiskPresent -ne $true -or
+                $report.LoopTickerBlockEntityFe -le 0 -or $report.LoopTickerPartFe -le 0) {
+            throw 'Integrated CPU capacity, native crafting, or induction power evidence failed'
+        }
+    }
+    $requiredFrames = if ($Chain -eq 'integrated_cpu') {
+        @('ae2lo-ripper-integrated-cpu-world.png','ae2lo-ripper-integrated-cpu-menu.png',
+          'ae2lo-ripper-integrated-cpu-reference-drive.png','ae2lo-ripper-integrated-cpu-ticker-menu.png')
+    } elseif ($Chain -eq 'machine_audit') { @('ae2lo-ripper-machine-ticker-ui.png','ae2lo-ripper-machine-condenser-ui.png') }
         elseif ($Chain -eq 'loop_ticker_part') { @('ae2lo-ripper-loop-ticker-part-menu.png') }
         elseif ($Chain -eq 'omni') { @('ae2lo-ripper-omni-ui.png','ae2lo-ripper-omni-world.png') }
         elseif ($Chain -eq 'omni_access') { @('ae2lo-ripper-omni-access-ui.png','ae2lo-ripper-omni-access-private-toggle.png','ae2lo-ripper-omni-access-private-created.png','ae2lo-ripper-omni-access-zh-2x.png','ae2lo-ripper-omni-access-en-2x.png') }
@@ -340,6 +356,7 @@ $beforeMods = @()
 $removedHelpers = New-Object System.Collections.Generic.List[object]
 $staged = Join-Path $runMods ([IO.Path]::GetFileName($helper))
 $stagedByThisRun = $false
+$stagedAddons = [System.Collections.Generic.List[string]]::new()
 $summary = [ordered]@{generation=$Generation;chain=$Chain;status='running';evidence=$evidence;startedAt=[DateTime]::UtcNow.ToString('o')}
 $originalFailure = $null
 try {
@@ -370,6 +387,16 @@ try {
     $stagedByThisRun = $true
     Copy-Item -LiteralPath $helper -Destination $staged
     if ((Get-Sha256 $staged) -ne $helperHash) { throw 'Staged ripper helper hash differs' }
+    foreach ($addon in $AdditionalMods) {
+        $source = Get-Item -LiteralPath $addon
+        if ($source.PSIsContainer -or $source.Extension -ne '.jar') { throw "Expected addon JAR: $addon" }
+        $destination = Join-Path $runMods $source.Name
+        Assert-WorkspacePath $destination
+        if (Test-Path -LiteralPath $destination) { throw "Addon staging would overwrite $destination" }
+        $stagedAddons.Add($destination)
+        Copy-Item -LiteralPath $source.FullName -Destination $destination
+        if ((Get-Sha256 $source.FullName) -ne (Get-Sha256 $destination)) { throw "Staged addon hash differs: $addon" }
+    }
     Write-EvidenceJson 'run-mods-active.json' @(Get-ModSnapshot)
     $orderArg = if ($env:AE2LO_CORE_ORDER) { ' -Dae2lo.probe.core.order=' + $env:AE2LO_CORE_ORDER } else { '' }
     $env:JAVA_TOOL_OPTIONS = '"-javaagent:' + $agent.Replace('\','/') + '" -Dae2lf.probe=false -Dae2lo.probe=true -Dae2lo.probe.background=true -Dae2lo.probe.autoExit=true' +
@@ -382,7 +409,7 @@ try {
     # JAVA_TOOL_OPTIONS is informational stderr in Windows PowerShell. Inspect native exit and reports.
     try {
         $ErrorActionPreference = 'Continue'
-        & powershell -NoProfile -File (Join-Path $taskRoot "build-$Generation.ps1") --offline --no-daemon runClient *> (Join-Path $evidence 'client.log')
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $taskRoot "build-$Generation.ps1") --offline --no-daemon runClient *> (Join-Path $evidence 'client.log')
         $nativeExit = $LASTEXITCODE
     } finally { $ErrorActionPreference = 'Stop' }
     $summary['exitCode'] = $nativeExit
@@ -402,6 +429,9 @@ try {
         if ($stagedByThisRun -and (Test-Path -LiteralPath $staged)) {
             Assert-WorkspacePath $staged
             Remove-Item -LiteralPath $staged
+        }
+        foreach ($destination in $stagedAddons) {
+            if (Test-Path -LiteralPath $destination) { Remove-Item -LiteralPath $destination }
         }
         foreach ($savedHelper in $removedHelpers) {
             if (Test-Path -LiteralPath $savedHelper.path) { throw "Refusing to overwrite a concurrently restored helper: $($savedHelper.path)" }

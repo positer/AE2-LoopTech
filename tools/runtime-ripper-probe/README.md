@@ -19,6 +19,12 @@ The gate requires the selected fixture's actual `report.json` and independent re
 
 Development `runClient` loads the main source set rather than the packaged production JAR. The runner checks each runtime class/resource byte against the frozen JAR before and after execution, excludes only the generated JAR manifest, and reports that boundary explicitly. It does not claim an installed PCL run.
 
+## 循环集成 CPU 验收
+
+从仓库根目录构建对应版本的生产 JAR 与 `ripperProbeJar`，再以 `-Chain integrated_cpu` 启动隔离客户端。场景需要匹配版本的 ExtendedAE、Applied Flux、Glodium 和含 Quantum Omni 磁盘的 AE Omni Cells。已加载的依赖由 `run/mods` 提供。对缺少的依赖，可用 `-AdditionalMods` 传入 JAR 路径数组，运行结束按原始哈希回读并恢复。
+
+此场景只用循环集成单元组成合成 CPU，检查 AE2 自动发现与选机、订单执行中换盘、四类磁盘合计、原生工作台配方、两个进刻器的定向输入和炉子产出。捕获四张原生画面，记录并比较两套驱动器界面各 20 个真实槽坐标。
+
 ## Fixture contracts
 
 This directory builds a separate **test mod**, `ae2lo_runtime_probe`. Its classes and resources must never be included in an AE2LO production JAR or ordinary installation. The probe depends on the real generation-matched AE2 and AE2LO artifacts, and invokes their existing storage, recipe decoder, planner, CPU submission and execution APIs.

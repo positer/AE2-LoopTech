@@ -4,7 +4,9 @@ import appeng.api.networking.IGridNode;
 import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
+import com.example.ae2lightoptimizer.integration.LoopTickerPower;
 import com.example.ae2lightoptimizer.integration.LoopTickerTarget;
+import appeng.core.definitions.AEItems;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartItem;
 import appeng.api.upgrades.IUpgradeInventory;
@@ -28,18 +30,43 @@ public final class LoopTickerPart extends AEBasePart
     private static final int MAX_CARDS = 4;
 
     private final IUpgradeInventory upgrades;
+    private final LoopTickerPower induction;
     private int rate;
 
     public LoopTickerPart(IPartItem<?> partItem) {
         super(partItem);
         getMainNode().setIdlePowerUsage(0).addService(IGridTickable.class, this);
-        this.upgrades = UpgradeInventories.forMachine(partItem, MAX_CARDS, this::onUpgradesChanged);
+        upgrades = UpgradeInventories.forMachine(partItem, MAX_CARDS + 1, this::onUpgradesChanged);
+        induction = new LoopTickerPower(() -> getMainNode().getGrid(), () -> getLevel().getGameTime(),
+                () -> getHost() != null && getHost().getPart(getSide()) == this
+                        && getLevel() instanceof ServerLevel && LoopTickerPower.installed(upgrades));
     }
 
     private void onUpgradesChanged() {
-        if (getHost() != null && getHost().getBlockEntity() != null) {
-            getHost().getBlockEntity().setChanged();
+        var host = getHost();
+        if (host != null) {
+            host.markForSave();
+            if (getLevel() instanceof ServerLevel server) {
+                server.invalidateCapabilities(getBlockEntity().getBlockPos());
+            }
         }
+    }
+
+    public appeng.helpers.ForgeEnergyAdapter inductionPort() {
+        return induction.port();
+    }
+
+    @Override
+    public void addAdditionalDrops(java.util.List<net.minecraft.world.item.ItemStack> drops, boolean wrenched) {
+        super.addAdditionalDrops(drops, wrenched);
+        for (var stack : upgrades) {
+            if (!stack.isEmpty()) drops.add(stack.copy());
+        }
+    }
+
+    @Override
+    public void clearContent() {
+        upgrades.clear();
     }
 
     @Override
@@ -48,10 +75,7 @@ public final class LoopTickerPart extends AEBasePart
     }
 
     public int maxRate() {
-        int installed = 0;
-        for (int slot = 0; slot < upgrades.size(); slot++) {
-            if (!upgrades.getStackInSlot(slot).isEmpty()) installed++;
-        }
+        int installed = upgrades.getInstalledUpgrades(AEItems.SPEED_CARD);
         return BASE_CAP << Math.min(installed, MAX_CARDS);
     }
 
@@ -80,16 +104,17 @@ public final class LoopTickerPart extends AEBasePart
     @Override
     public boolean onUseItemOn(net.minecraft.world.item.ItemStack stack, net.minecraft.world.entity.player.Player player,
             net.minecraft.world.InteractionHand hand, net.minecraft.world.phys.Vec3 pos) {
-        if (player.isShiftKeyDown() && stack.is(appeng.core.definitions.AEItems.SPEED_CARD.asItem())) {
+        boolean inductionCard = LoopTickerPower.isCard(stack);
+        if (player.isShiftKeyDown() && (inductionCard || stack.is(AEItems.SPEED_CARD.asItem()))) {
             if (!isClientSide()) {
-                var inventory = getUpgrades();
-                for (int slot = 0; slot < inventory.size() && !stack.isEmpty(); slot++) {
-                    if (inventory.getStackInSlot(slot).isEmpty()) {
-                        inventory.setItemDirect(slot, stack.copyWithCount(1));
-                        stack.shrink(1);
+                int start = inductionCard ? INDUCTION_SLOT : 0;
+                int end = inductionCard ? INDUCTION_SLOT + 1 : MAX_CARDS;
+                for (int slot = start; slot < end && !stack.isEmpty(); slot++) {
+                    if (upgrades.getStackInSlot(slot).isEmpty() && upgrades.isItemValid(slot, stack)) {
+                        upgrades.setItemDirect(slot, stack.copyWithCount(1));
+                        stack.consume(1, player);
                     }
                 }
-                saveRate();
             }
             return true;
         }

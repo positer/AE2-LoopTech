@@ -38,6 +38,11 @@ public final class ModBlockEntities {
             LOOP_TICKER = BLOCK_ENTITIES.register("loop_ticker",
                     () -> new BlockEntityType<>(LoopTickerBlockEntity::new, ModBlocks.LOOP_TICKER.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LoopIntegratedCpuBlockEntity>>
+            LOOP_INTEGRATED_CPU = BLOCK_ENTITIES.register("loop_integrated_cpu",
+                    () -> new BlockEntityType<>(
+                            LoopIntegratedCpuBlockEntity::new, ModBlocks.LOOP_INTEGRATED_CPU.get()));
+
     private ModBlockEntities() {
     }
 }

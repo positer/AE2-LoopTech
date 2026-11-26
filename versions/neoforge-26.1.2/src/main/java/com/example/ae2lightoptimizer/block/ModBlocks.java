@@ -39,6 +39,10 @@ public final class ModBlocks {
 
     public static final DeferredBlock<Block> LOOP_CRYSTAL_BLOCK = BLOCKS.registerBlock("loop_crystal_block", Block::new,
             () -> BlockBehaviour.Properties.of().strength(1.5F).sound(SoundType.AMETHYST));
+    public static final DeferredBlock<LoopIntegratedCpuBlock> LOOP_INTEGRATED_CPU = BLOCKS.registerBlock(
+            "loop_integrated_cpu", LoopIntegratedCpuBlock::new,
+            () -> BlockBehaviour.Properties.of().strength(2.2F).sound(SoundType.METAL));
+
     private ModBlocks() {
     }
 }

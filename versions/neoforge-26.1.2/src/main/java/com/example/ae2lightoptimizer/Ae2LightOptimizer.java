@@ -5,6 +5,7 @@ import appeng.api.storage.StorageCells;
 import appeng.api.upgrades.Upgrades;
 import appeng.core.definitions.AEItems;
 import com.example.ae2lightoptimizer.block.ModBlockEntities;
+import com.example.ae2lightoptimizer.integration.LoopTickerPower;
 import com.example.ae2lightoptimizer.block.ModBlocks;
 import com.example.ae2lightoptimizer.item.ModItems;
 import com.example.ae2lightoptimizer.storage.LoopStorageCellHandler;
@@ -23,7 +24,7 @@ public final class Ae2LightOptimizer {
     public static final String MOD_ID = "ae2lpt";
     public static final String NAMESPACE = MOD_ID;
     public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, NAMESPACE);
-    public static final net.neoforged.neoforge.registries.DeferredHolder<CreativeModeTab, CreativeModeTab> AE2_LIGHTOPTIMIZER_TAB = CREATIVE_TABS.register("ae2_lightoptimizer", () -> CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("itemGroup.ae2lpt")).icon(() -> ModItems.LOOP_CRYSTAL.get().getDefaultInstance()).displayItems((p, o) -> { o.accept(com.example.ae2lightoptimizer.omni.OmniContent.ITEM.get()); o.accept(ModItems.CRAFTING_RIPPER.get()); o.accept(ModItems.LOOP_CONDENSER.get()); o.accept(ModItems.LOOP_TICKER.get()); o.accept(ModItems.LOOP_TICKER_PART.get()); o.accept(ModItems.LOOP_CARD.get()); o.accept(ModItems.LOOP_FACTORY_PATTERN.get()); com.example.ae2lightoptimizer.factory.FactoryContent.ITEMS.getEntries().forEach(item -> o.accept(item.get())); o.accept(ModItems.RECIPE_RING_SOLVER_TERMINAL.get()); o.accept(ModItems.SUPERCOMPUTING_CRAFTING_OPTIMIZER_INTERFACE.get()); o.accept(ModItems.LOOP_CRYSTAL.get()); if (net.neoforged.fml.ModList.get().isLoaded("ae2cs")) com.example.ae2lightoptimizer.compat.CrystalScienceCompat.display(o); o.accept(ModItems.LOOP_CRYSTAL_FRAGMENT.get()); o.accept(ModItems.LOOP_CRYSTAL_BLOCK.get()); o.accept(ModItems.LOOP_CRYSTAL_POWDER.get()); ModItems.loopStorageItems().forEach(o::accept); ModItems.PORTABLE_LOOP_STORAGE_CELLS.forEach(item -> item.get().emptyAndFullStacks().forEach(o::accept)); }).build());
+    public static final net.neoforged.neoforge.registries.DeferredHolder<CreativeModeTab, CreativeModeTab> AE2_LIGHTOPTIMIZER_TAB = CREATIVE_TABS.register("ae2_lightoptimizer", () -> CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("itemGroup.ae2lpt")).icon(() -> ModItems.LOOP_CRYSTAL.get().getDefaultInstance()).displayItems((p, o) -> { o.accept(com.example.ae2lightoptimizer.omni.OmniContent.ITEM.get()); o.accept(ModItems.CRAFTING_RIPPER.get()); o.accept(ModItems.LOOP_CONDENSER.get()); o.accept(ModItems.LOOP_TICKER.get()); o.accept(ModItems.LOOP_INTEGRATED_CPU.get()); o.accept(ModItems.LOOP_TICKER_PART.get()); o.accept(ModItems.LOOP_CARD.get()); o.accept(ModItems.LOOP_FACTORY_PATTERN.get()); com.example.ae2lightoptimizer.factory.FactoryContent.ITEMS.getEntries().forEach(item -> o.accept(item.get())); o.accept(ModItems.RECIPE_RING_SOLVER_TERMINAL.get()); o.accept(ModItems.SUPERCOMPUTING_CRAFTING_OPTIMIZER_INTERFACE.get()); o.accept(ModItems.LOOP_CRYSTAL.get()); if (net.neoforged.fml.ModList.get().isLoaded("ae2cs")) com.example.ae2lightoptimizer.compat.CrystalScienceCompat.display(o); o.accept(ModItems.LOOP_CRYSTAL_FRAGMENT.get()); o.accept(ModItems.LOOP_CRYSTAL_BLOCK.get()); o.accept(ModItems.LOOP_CRYSTAL_POWDER.get()); ModItems.loopStorageItems().forEach(o::accept); ModItems.PORTABLE_LOOP_STORAGE_CELLS.forEach(item -> item.get().emptyAndFullStacks().forEach(o::accept)); }).build());
 
     public Ae2LightOptimizer(IEventBus modEventBus) {
         verifyTakeoverTargetLoads();
@@ -47,7 +48,9 @@ public final class Ae2LightOptimizer {
         com.example.ae2lightoptimizer.LegacyNamespace.bind(com.example.ae2lightoptimizer.menu.LoopTickerMenu.MENUS, modEventBus);
         com.example.ae2lightoptimizer.LegacyNamespace.bind(ModBlockEntities.BLOCK_ENTITIES, modEventBus);
         modEventBus.addListener(Ae2LightOptimizer::commonSetup);
+        LegacyNamespace.bind(com.example.ae2lightoptimizer.menu.LoopIntegratedCpuMenu.MENUS, modEventBus);
         modEventBus.addListener(Ae2LightOptimizer::registerCapabilities);
+        modEventBus.addListener(LoopTickerPower::registerPartCapability);
         modEventBus.addListener(Ae2LightOptimizer::addCreativeTabContents);
     }
 
@@ -71,8 +74,14 @@ public final class Ae2LightOptimizer {
                     com.example.ae2lightoptimizer.block.LoopTickerBlockEntity.class, tickerType26, null, null);
             ModBlocks.LOOP_CONDENSER.get().setBlockEntity(
                     appeng.blockentity.misc.CondenserBlockEntity.class, condenserType, null, null);
+            ModBlocks.LOOP_INTEGRATED_CPU.get().setBlockEntity(
+                    com.example.ae2lightoptimizer.block.LoopIntegratedCpuBlockEntity.class,
+                    ModBlockEntities.LOOP_INTEGRATED_CPU.get(), null, null);
+            appeng.blockentity.AEBaseBlockEntity.registerBlockEntityItem(
+                    ModBlockEntities.LOOP_INTEGRATED_CPU.get(), ModItems.LOOP_INTEGRATED_CPU.get());
             Upgrades.add(AEItems.SPEED_CARD, ModBlocks.LOOP_TICKER.get(), 4);
             Upgrades.add(AEItems.SPEED_CARD, ModItems.LOOP_TICKER_PART.get(), 4);
+            LoopTickerPower.setup();
             appeng.blockentity.AEBaseBlockEntity.registerBlockEntityItem(ModBlockEntities.LOOP_CONDENSER.get(), ModItems.LOOP_CONDENSER.get());
             appeng.blockentity.AEBaseBlockEntity.registerBlockEntityItem(ModBlockEntities.LOOP_TICKER.get(), ModItems.LOOP_TICKER.get());
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.example.ae2lightoptimizer.integration.CondenserLoopService::onServerTick);
@@ -112,6 +121,9 @@ public final class Ae2LightOptimizer {
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, com.example.ae2lightoptimizer.omni.OmniContent.ENTITY.get(), (host, context) -> host);
+        event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST,
+                ModBlockEntities.LOOP_INTEGRATED_CPU.get(), (cpu, context) -> cpu);
+        LoopTickerPower.registerBlockCapability(event);
         com.example.ae2lightoptimizer.storage.PortableLoopEnergy.registerCapabilities(event);
         event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK,
                 ModBlockEntities.LOOP_CONDENSER.get(), (host, side) -> host.getExternalInv().toResourceHandler());

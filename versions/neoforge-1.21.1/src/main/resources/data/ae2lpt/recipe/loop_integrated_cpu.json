@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ICI",
+    "CUC",
+    "IDI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "tag": "c:gems/loop_crystal"
+    },
+    "U": {
+      "item": "ae2:crafting_unit"
+    },
+    "D": {
+      "item": "ae2:drive"
+    }
+  },
+  "result": {
+    "id": "ae2lpt:loop_integrated_cpu",
+    "count": 1
+  }
+}

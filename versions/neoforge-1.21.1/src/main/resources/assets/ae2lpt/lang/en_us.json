@@ -196,6 +196,8 @@
   "gui.ae2lpt.omni.private": "Private",
   "gui.ae2lpt.omni.visibility": "Channel visibility",
   "gui.ae2lpt.omni.visibility.hint": "Locked: only you can see and join this channel",
+  "gui.ae2lpt.loop_integrated_cpu.status": "Crafting CPU Status",
+  "block.ae2lpt.loop_integrated_cpu": "Loop Integrated CPU",
   "block.ae2lpt.loop_ticker": "Loop Tick Accelerator",
   "block.ae2lpt.loop_condenser": "Loop Matter Condenser",
   "gui.ae2lpt.loop_ticker.rate": "Rate",

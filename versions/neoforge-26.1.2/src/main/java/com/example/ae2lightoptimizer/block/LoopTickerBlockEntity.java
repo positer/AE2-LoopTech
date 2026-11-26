@@ -4,6 +4,7 @@ import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
 import appeng.api.upgrades.UpgradeInventories;
 import appeng.blockentity.grid.AENetworkedBlockEntity;
+import com.example.ae2lightoptimizer.integration.LoopTickerPower;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.storage.ValueInput;
@@ -23,13 +24,25 @@ public final class LoopTickerBlockEntity extends AENetworkedBlockEntity
     private static final int BASE_CAP = 4;
 
     private final IUpgradeInventory upgrades;
+    private final LoopTickerPower induction;
     /** 0 means "follow the maximum"; a stored value is the player's explicit pick. */
     private double selectedBaseRate;
 
     public LoopTickerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LOOP_TICKER.get(), pos, state);
         getMainNode().setFlags(appeng.api.networking.GridFlags.REQUIRE_CHANNEL).setIdlePowerUsage(0);
-        this.upgrades = UpgradeInventories.forMachine(ModBlocks.LOOP_TICKER.get(), MAX_CARDS, this::saveChanges);
+        upgrades = UpgradeInventories.forMachine(ModBlocks.LOOP_TICKER.get(), MAX_CARDS + 1, this::onUpgradesChanged);
+        induction = new LoopTickerPower(() -> getMainNode().getGrid(), () -> level.getGameTime(),
+                () -> level instanceof ServerLevel && !isRemoved() && LoopTickerPower.installed(upgrades));
+    }
+
+    private void onUpgradesChanged() {
+        saveChanges();
+        if (level instanceof ServerLevel) level.invalidateCapabilities(getBlockPos());
+    }
+
+    public appeng.helpers.ForgeEnergyAdapter inductionPort() {
+        return induction.port();
     }
 
     @Override

@@ -8,6 +8,8 @@ import com.example.ae2lightoptimizer.Ae2LightOptimizer;
 import com.example.ae2lightoptimizer.api.LoopTickerHost;
 import com.example.ae2lightoptimizer.block.LoopTickerBlockEntity;
 import com.example.ae2lightoptimizer.part.LoopTickerPart;
+import com.example.ae2lightoptimizer.integration.LoopTickerPower;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
@@ -36,10 +38,16 @@ public final class LoopTickerMenu extends AEBaseMenu {
                           LoopTickerHost host) {
         super(type, id, playerInventory, host);
         this.host = host;
-        for (int slot = 0; slot < LoopTickerHost.MAX_CARDS; slot++) {
+        int slotCount = LoopTickerHost.MAX_CARDS + (LoopTickerPower.cardAvailable() ? 1 : 0);
+        for (int slot = 0; slot < slotCount; slot++) {
+            boolean inductionSlot = slot == LoopTickerHost.INDUCTION_SLOT;
             addSlot(new appeng.menu.slot.RestrictedInputSlot(
-                    appeng.menu.slot.RestrictedInputSlot.PlacableItemType.UPGRADES, host.getUpgrades(), slot),
-                    SlotSemantics.UPGRADE);
+                    appeng.menu.slot.RestrictedInputSlot.PlacableItemType.UPGRADES, host.getUpgrades(), slot) {
+                @Override
+                public boolean mayPlace(ItemStack stack) {
+                    return LoopTickerPower.isCard(stack) == inductionSlot && super.mayPlace(stack);
+                }
+            }, SlotSemantics.UPGRADE);
         }
         createPlayerInventorySlots(playerInventory);
     }

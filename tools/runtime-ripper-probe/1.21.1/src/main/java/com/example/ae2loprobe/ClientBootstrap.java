@@ -90,6 +90,39 @@ public final class ClientBootstrap {
         if (minecraft.level == null || minecraft.player == null || minecraft.getSingleplayerServer() == null) return;
         if (!minecraft.getSingleplayerServer().getWorldData().getLevelName().startsWith(WORLD_PREFIX)) return;
 
+        if (IntegratedCpuFixture.ENABLED) {
+            var frame = ProbeState.screenshotRequest;
+            if (frame != null && !CAPTURED.contains(frame)) {
+                if (!frame.equals(pendingScreenshot)) { pendingScreenshot = frame; screenshotDelay = 20; }
+                if (screenshotDelay > 0 && --screenshotDelay == 0) {
+                    String requiredScreen = switch (frame) {
+                        case IntegratedCpuFixture.CPU_FRAME -> "LoopIntegratedCpuScreen";
+                        case IntegratedCpuFixture.DRIVE_FRAME -> "GuiExDrive";
+                        case IntegratedCpuFixture.TICKER_FRAME -> "LoopTickerScreen";
+                        default -> "";
+                    };
+                    if (!requiredScreen.isEmpty() && (minecraft.screen == null
+                            || !minecraft.screen.getClass().getSimpleName().equals(requiredScreen))) {
+                        screenshotDelay = 1;
+                        return;
+                    }
+                    var menu = minecraft.player.containerMenu;
+                    if (IntegratedCpuFixture.CPU_FRAME.equals(frame) || IntegratedCpuFixture.DRIVE_FRAME.equals(frame)) {
+                        var slots = menu.slots.subList(0, 20).stream().map(slot -> java.util.List.of(slot.x, slot.y)).toList();
+                        String file = IntegratedCpuFixture.CPU_FRAME.equals(frame) ? "cpu-menu-slots.json" : "extended-drive-slots.json";
+                        try {
+                            Files.writeString(evidenceDirectory(minecraft).resolve(file),
+                                    new com.google.gson.Gson().toJson(slots));
+                        } catch (java.io.IOException error) {
+                            throw new IllegalStateException(error);
+                        }
+                    }
+                    capture(frame);
+                }
+            }
+            if (ProbeState.finished) advanceNormalShutdown(minecraft);
+            return;
+        }
         if (OmniProbe.ENABLED) {
             if (OmniClient.tick(minecraft)) advanceNormalShutdown(minecraft);
             return;

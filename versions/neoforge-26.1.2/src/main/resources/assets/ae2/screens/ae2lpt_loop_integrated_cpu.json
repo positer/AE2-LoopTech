@@ -1,0 +1,46 @@
+{
+  "includes": [
+    "common/common.json",
+    "common/player_inventory.json"
+  ],
+  "background": {
+    "texture": "guis/ae2lpt_loop_integrated_cpu.png",
+    "srcRect": [
+      0,
+      0,
+      176,
+      201
+    ]
+  },
+  "slots": {
+    "STORAGE_CELL": {
+      "left": 34,
+      "top": 16,
+      "grid": "BREAK_AFTER_2COLS"
+    },
+    "AE2LPT_CPU_SECOND_BANK": {
+      "left": 109,
+      "top": 16,
+      "grid": "BREAK_AFTER_2COLS"
+    }
+  },
+  "text": {
+    "dialog_title": {
+      "text": {
+        "translate": "block.ae2lpt.loop_integrated_cpu"
+      },
+      "position": {
+        "left": 8,
+        "top": 6
+      }
+    }
+  },
+  "widgets": {
+    "openPriority": {
+      "left": 152,
+      "top": -5,
+      "width": 20,
+      "height": 20
+    }
+  }
+}
