@@ -168,6 +168,12 @@ public final class LoopTickerPart extends AEBasePart
         return new TickingRequest(1, 1, false);
     }
 
+    /** Additional activation from an adjacent accelerator; never ticks the ME grid itself. */
+    public void accelerateFromTicker() {
+        var node = getGridNode();
+        if (node != null) tickingRequest(node, 1);
+    }
+
     @Override
     public TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
         if (node.isActive() && getLevel() instanceof ServerLevel server) {
