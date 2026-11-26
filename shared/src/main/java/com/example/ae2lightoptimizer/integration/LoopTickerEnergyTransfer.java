@@ -41,7 +41,10 @@ final class LoopTickerEnergyTransfer {
     private static int wholeFe(double ae, double aePerFe) {
         if (!(ae > 0) || !Double.isFinite(ae)) return 0;
         int result = (int) Math.floor(ae / aePerFe);
-        // A division rounded upward at an integer boundary must not authorize extra FE.
-        return result > 0 && result * aePerFe > ae ? result - 1 : result;
+        // Use the same rounded multiplication as the actual debit. Division can round
+        // either way at an integer boundary, including when AE was debited for exactly MAX FE.
+        if (result > 0 && result * aePerFe > ae) return result - 1;
+        if (result < Integer.MAX_VALUE && (result + 1) * aePerFe <= ae) return result + 1;
+        return result;
     }
 }

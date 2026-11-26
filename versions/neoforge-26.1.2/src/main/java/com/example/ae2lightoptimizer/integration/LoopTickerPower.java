@@ -52,7 +52,8 @@ public final class LoopTickerPower {
         var receiver = level.getCapability(Capabilities.Energy.BLOCK, target, facing.getOpposite());
         if (receiver == null) return;
         var energy = network.getEnergyService();
-        transfer.push(level.getGameTime(), PowerUnit.FE.convertTo(PowerUnit.AE, 1),
+        // AE2 ticks the part before the level advances game time; block callbacks can run later.
+        transfer.push(level.getServer().getTickCount(), PowerUnit.FE.convertTo(PowerUnit.AE, 1),
                 (amount, simulate) -> energy.extractAEPower(amount,
                         simulate ? Actionable.SIMULATE : Actionable.MODULATE, PowerMultiplier.ONE),
                 amount -> energy.injectPower(amount, Actionable.MODULATE),
