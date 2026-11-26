@@ -236,6 +236,26 @@ final class IntegratedCpuFixture {
         check(cpu.getCluster() == cluster && cluster.getAvailableStorage() == 0 && cluster.getCoProcessors() == 0,
                 "removing all infinite disks did not restore the original empty CPU");
         report.put("infiniteDisksHotPlugged", true);
+        var cell256k = ModItems.LOOP_STORAGE_CELL_256K.get();
+        var cell1m = ModItems.LOOP_STORAGE_CELL_1M.get();
+        check(cell256k.tier().hasTypeLimit() && cell256k.tier().maxTypes() == 63
+                && cell256k.tier().capacityBytes() == 262144, "256k disk storage contract");
+        check(!cell1m.tier().hasTypeLimit() && cell1m.tier().capacityBytes() == 66060288,
+                "1M disk storage pool and type contract");
+        cpu.cells().setItemDirect(18, cell256k.getDefaultInstance());
+        long bytes256k = cluster.getAvailableStorage();
+        int co256k = cluster.getCoProcessors();
+        check(bytes256k == 262144 && co256k == 1024, "256k Loop cell CPU contribution");
+        cpu.cells().setItemDirect(18, cell1m.getDefaultInstance());
+        long bytes1m = cluster.getAvailableStorage();
+        int co1m = cluster.getCoProcessors();
+        check(bytes1m == 4 * bytes256k && co1m == 4 * co256k, "1M Loop cell CPU contribution");
+        report.put("loop256kCpuBytes", bytes256k);
+        report.put("loop256kCpuCoprocessors", co256k);
+        report.put("loop1mCpuBytes", bytes1m);
+        report.put("loop1mCpuCoprocessors", co1m);
+        report.put("loop1mDiskPoolBytes", cell1m.tier().capacityBytes());
+        cpu.cells().setItemDirect(18, ItemStack.EMPTY);
         cpu.cells().setItemDirect(0, AEItems.ITEM_CELL_4K.stack());
         check(cluster.getAvailableStorage() == 4096 && cluster.getCoProcessors() == 0, "item disk contribution");
         cpu.cells().setItemDirect(1, AEItems.FLUID_CELL_256K.stack());

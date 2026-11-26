@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.2
+
+### English
+
+- Added the Loop Integrated CPU for Minecraft 1.21.1 and 26.1.2. It uses gray-white AE2 crafting unit textures and a 20-slot layout with two banks. Use the top-right tab to open the native crafting status.
+- Item cells provide the same crafting storage as the matching AE2 storage unit. A 1k item cell provides 1,024 bytes. Fluid cells add one co-processor per 256 rated bytes. Loop cells and Quantum Omni cells contribute to both totals. A 1M Loop cell contributes four times as much as a 256k cell to each total. An Infinite Loop Storage Cell provides unlimited crafting storage and co-processor capacity.
+- Craft the Loop Integrated CPU with iron ingots in the corners, Loop Crystals at top center and both sides of the middle row, an AE2 Crafting Unit in the center, and an ME Drive at bottom center.
+- With Applied Flux installed, both Loop Tick Accelerator forms accept one Induction Card. The block's green face and the cable part's mounting face can receive Forge Energy to power the ME network, up to 2,147,483,647 FE per tick per port.
+
+### 简体中文
+
+- Minecraft 1.21.1 与 26.1.2 新增循环集成 CPU。它采用灰白色 AE2 合成单元材质，界面分两组共 20 个磁盘槽。点击右上角标签可打开原生合成状态。
+- 物品盘提供与同档 AE2 合成存储单元等额的容量，1k 物品盘提供 1,024 字节。流体盘每 256 标称字节提供一个协处理器。循环盘和 Quantum Omni 量子盘同时贡献两项数值。1M 循环盘的两项贡献均为 256k 循环盘的四倍。一张无限循环存储磁盘可提供无限合成存储和协处理能力。
+- 合成循环集成 CPU 时，四角放铁锭，上中、左中、右中放循环水晶，正中放 AE2 合成单元，下中放 ME 磁盘驱动器。
+- 安装 Applied Flux 后，两种循环进刻器各可装一张感应卡。方块从绿色面输入 FE，线缆部件从安装面输入 FE，为 ME 网络供电。每个端口每刻上限为 2,147,483,647 FE。
+
 ## 0.1.1
 
 ### English

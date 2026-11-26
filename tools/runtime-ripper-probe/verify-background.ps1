@@ -248,6 +248,11 @@ function Assert-GameplayEvidence([string]$world) {
         if ($cpuSlots -ne $referenceSlots -or @((ConvertFrom-Json -InputObject $cpuSlots)).Count -ne 20) {
             throw 'Native screen slot geometry differs from the extended ME drive'
         }
+        if ($report.loop256kCpuBytes -ne 262144 -or $report.loop256kCpuCoprocessors -ne 1024 -or
+                $report.loop1mCpuBytes -ne 1048576 -or $report.loop1mCpuCoprocessors -ne 4096 -or
+                $report.loop1mDiskPoolBytes -ne 66060288) {
+            throw '256k to 1M Loop disk CPU capacity or storage pool check failed'
+        }
         if ($report.infiniteStorageBytes -ne [long]::MaxValue -or
                 $report.infiniteCoprocessors -ne ([int]::MaxValue - 1) -or $report.infiniteDisksHotPlugged -ne $true -or
                 $report.infiniteNativeOrderCompleted -ne $true) {
