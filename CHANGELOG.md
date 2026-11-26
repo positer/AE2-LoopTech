@@ -4,11 +4,11 @@
 
 ### English
 
-- Fixed the Applied Flux Induction Card on both Loop Tick Accelerator forms in Minecraft 1.21.1 and 26.1.2. The accelerator now draws power from the ME network and actively sends Forge Energy to the adjacent machine, using only the face that touches the green block face or the cable part's mounting face. It no longer exposes an FE port for external push or pull. Output is capped at 2,147,483,647 FE per accelerator per game tick, subject to available ME power and machine acceptance.
+- Fixed the Applied Flux Induction Card on both Loop Tick Accelerator forms in Minecraft 1.21.1 and 26.1.2. The accelerator now draws power from the ME network and actively sends Forge Energy to the adjacent machine, using only the face that touches the green block face or the cable part's mounting face. It no longer exposes an FE port for external push or pull. Each accelerator attempts the full amount supported by the target's FE interface every server tick. The card imposes no additional limit; actual output depends on ME supply and machine acceptance.
 
 ### 简体中文
 
-- 修复 Minecraft 1.21.1 与 26.1.2 中两种循环进刻器的 Applied Flux 感应卡。装卡后，进刻器从 ME 网络取电，主动向绿色面或线缆部件安装面所朝向的相邻机器输出 FE，仅使用该机器与进刻器相接的一面。进刻器不再提供供外部设备灌入或抽取 FE 的端口。每台进刻器每游戏 tick 上限为 2,147,483,647 FE，实际输出取决于 ME 网络供电与机器接收量。
+- 修复 Minecraft 1.21.1 与 26.1.2 中两种循环进刻器的 Applied Flux 感应卡。装卡后，进刻器从 ME 网络取电，主动向绿色面或线缆部件安装面所朝向的相邻机器输出 FE，仅使用该机器与进刻器相接的一面。进刻器不再提供供外部设备灌入或抽取 FE 的端口。每个服务器 tick 都按目标 FE 接口所支持的最大量尝试输出，感应卡不额外限流；实际输出取决于 ME 网络可供电量和目标机器接收量。
 
 ## 0.1.2
 

@@ -22,7 +22,7 @@ final class LoopTickerEnergyTransfer {
         attempted = true;
         lastTick = gameTick;
 
-        double maxAe = Integer.MAX_VALUE * aePerFe;
+        double maxAe = Integer.MAX_VALUE * aePerFe; // Native FE insertion uses int; the card has no separate limit.
         int available = wholeFe(source.extract(maxAe, true), aePerFe);
         if (available == 0) return 0;
         int demand = Math.clamp(receiver.insert(available, true), 0, available);
