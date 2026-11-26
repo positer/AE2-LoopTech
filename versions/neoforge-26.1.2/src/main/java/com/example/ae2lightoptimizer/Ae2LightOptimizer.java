@@ -50,7 +50,6 @@ public final class Ae2LightOptimizer {
         modEventBus.addListener(Ae2LightOptimizer::commonSetup);
         LegacyNamespace.bind(com.example.ae2lightoptimizer.menu.LoopIntegratedCpuMenu.MENUS, modEventBus);
         modEventBus.addListener(Ae2LightOptimizer::registerCapabilities);
-        modEventBus.addListener(LoopTickerPower::registerPartCapability);
         modEventBus.addListener(Ae2LightOptimizer::addCreativeTabContents);
     }
 
@@ -123,7 +122,6 @@ public final class Ae2LightOptimizer {
         event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, com.example.ae2lightoptimizer.omni.OmniContent.ENTITY.get(), (host, context) -> host);
         event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST,
                 ModBlockEntities.LOOP_INTEGRATED_CPU.get(), (cpu, context) -> cpu);
-        LoopTickerPower.registerBlockCapability(event);
         com.example.ae2lightoptimizer.storage.PortableLoopEnergy.registerCapabilities(event);
         event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK,
                 ModBlockEntities.LOOP_CONDENSER.get(), (host, side) -> host.getExternalInv().toResourceHandler());

@@ -43,7 +43,7 @@ In a crafting table, put iron ingots in the corners, Loop Crystals at top center
 - **Loop Tick Accelerator.** Aim the block’s green top at the target. It can face any of the six directions. Craft the block alone to turn it into a cable part, or craft the part alone to get the block back. A mounted part targets the block directly in front of its mounted face. Right-click with an empty hand to open the rate controls. An online accelerator adds 1–4 calls per tick by default. Each Acceleration Card doubles the upper limit, up to 64 with four cards. Multiple block or part accelerators add their selected rates. Two units set to 2 and 3 add five calls to an eligible target each tick alongside its normal ticking. Actual throughput also depends on the target’s inputs, power and internal limits.
 - **Loop Matter Condenser.** Use a Cell Workbench to partition a Loop Storage Cell with the items you want to process. Place the cell in the condenser’s template slot, connect an active ME channel and choose the native matter-ball, singularity or trash mode. It takes matching items from ME storage every server tick and returns products to the network. An Inverter Card on the template cell excludes marked items and a Fuzzy Card enables fuzzy matching. If the network cannot take a product, the condenser retains its matter credit for later. You can also use the native manual inputs.
 
-If Applied Flux is installed, each accelerator accepts one Induction Card in its dedicated upgrade slot. Feed Forge Energy at the block's green face or the cable part's exposed mounting face to power the ME network. Each port accepts up to 2,147,483,647 FE per tick, subject to available ME energy capacity.
+If Applied Flux is installed, each accelerator accepts one Induction Card in its dedicated upgrade slot. The accelerator draws power from the ME network and pushes Forge Energy to the adjacent machine, using only the machine face touching the green block face or the cable part's mounting face. It does not expose an FE port.
 
 ### Programmable Loop Factory
 
@@ -139,7 +139,7 @@ END
 - **循环进刻器。** 将方块的绿色顶面对准目标，支持六向旋转。把方块单独放入合成格可换成线缆部件，把部件单独合成可换回方块。线缆部件加速安装面正前方的相邻方块。空手右键打开倍率界面。在线时默认每 tick 追加 1–4 次调用，每张加速卡让倍率上限翻倍，四张最高 64。多台方块或部件对准同一目标时，追加次数相加。例如分别设置为 2 和 3，每 tick 共追加 5 次，目标本身照常运行。实际产量还受机器的原料、电力和内部限制影响。
 - **循环物质聚合器。** 先在元件工作台为循环磁盘标记要处理的物品，再把磁盘放入模板槽。给机器接上可用的 ME 频道，选择物质球、奇点或销毁模式。聚合器逐 tick 从网络抽取匹配物品，并将产物送回网络。在模板磁盘上装反相卡可排除标记物品，装模糊卡可使用模糊匹配。网络暂时装不下产物时会保留物质余额，等有空间后再结算。也可以使用机器的原生手动输入。
 
-装有 Applied Flux 时，两种进刻器各有一个专用感应卡槽。方块从绿色面接收 FE，部件从安装面接收 FE，并按 AE2 的换算率为 ME 网络供电。每个端口每 tick 最多接收 2,147,483,647 FE，实际输入取决于网络剩余储能空间。
+装有 Applied Flux 时，两种进刻器各有一个专用感应卡槽。装卡后，进刻器从 ME 网络取电，并主动向绿色面或部件安装面所朝向的相邻机器输出 FE，只使用机器与进刻器相接的一面。进刻器不对外暴露 FE 端口。
 
 ### 可编程循环工厂
 

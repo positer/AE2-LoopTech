@@ -1,0 +1,7 @@
+# Loop Tick Accelerator Induction Card output
+
+- Scope: the block and cable-part variants in NeoForge 1.21.1 and 26.1.2; the Loop Factory Pattern Provider is unchanged.
+- The existing optional Applied Flux card now draws operating power from the active ME grid with AE2's FE conversion. The only destination is the neighboring block on the green face / cable part mounting side; only the neighbor's face touching the accelerator is queried. No public FE capability is registered for either variant.
+- The transfer uses one attempt per game tick, simulates grid power and machine demand, exports only whole FE backed by actual AE extracted, and returns unused AE to the grid. The 26.1.2 simulation rolls back its NeoForge transaction.
+- Regression unit cases: fewer than one FE's worth of AE, full receiver, partial acceptance/refund, one transfer per tick, and actual extraction smaller than simulated.
+- In-world regression checklist: energize a grid with the ticker, put sided consumers in front and behind (including a front consumer configured to accept only on the wrong face), test both ticker forms with/without one Induction Card, and verify that the front consumer accepts on the touching face only and the ticker exposes no FE capability. Existing factories are outside this behavior change.

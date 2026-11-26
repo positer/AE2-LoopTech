@@ -30,16 +30,13 @@ public final class LoopTickerPart extends AEBasePart
     private static final int MAX_CARDS = 4;
 
     private final IUpgradeInventory upgrades;
-    private final LoopTickerPower induction;
+    private final LoopTickerPower induction = new LoopTickerPower();
     private int rate;
 
     public LoopTickerPart(IPartItem<?> partItem) {
         super(partItem);
         getMainNode().setIdlePowerUsage(0).addService(IGridTickable.class, this);
         upgrades = UpgradeInventories.forMachine(partItem, MAX_CARDS + 1, this::onUpgradesChanged);
-        induction = new LoopTickerPower(() -> getMainNode().getGrid(), () -> getLevel().getGameTime(),
-                () -> getHost() != null && getHost().getPart(getSide()) == this
-                        && getLevel() instanceof ServerLevel && LoopTickerPower.installed(upgrades));
     }
 
     private void onUpgradesChanged() {
@@ -50,10 +47,6 @@ public final class LoopTickerPart extends AEBasePart
                 server.invalidateCapabilities(getBlockEntity().getBlockPos());
             }
         }
-    }
-
-    public appeng.helpers.ForgeEnergyAdapter inductionPort() {
-        return induction.port();
     }
 
     @Override
@@ -158,7 +151,10 @@ public final class LoopTickerPart extends AEBasePart
     @Override
     public TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
         if (node.isActive() && getLevel() instanceof ServerLevel server) {
-            LoopTickerTarget.accelerate(this, server, getBlockEntity().getBlockPos().relative(getSide()), rate());
+            var origin = getBlockEntity().getBlockPos();
+            var face = getSide();
+            induction.push(server, origin, face, node.getGrid(), LoopTickerPower.installed(upgrades));
+            LoopTickerTarget.accelerate(this, server, origin.relative(face), rate());
         }
         return TickRateModulation.SAME;
     }

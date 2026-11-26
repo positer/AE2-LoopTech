@@ -25,7 +25,7 @@ public final class LoopTickerBlockEntity extends AENetworkedBlockEntity
     private static final int BASE_CAP = 4;
 
     private final IUpgradeInventory upgrades;
-    private final LoopTickerPower induction;
+    private final LoopTickerPower induction = new LoopTickerPower();
     /** 0 means "follow the maximum"; a stored value is the player's explicit pick. */
     private double selectedBaseRate;
 
@@ -33,17 +33,11 @@ public final class LoopTickerBlockEntity extends AENetworkedBlockEntity
         super(ModBlockEntities.LOOP_TICKER.get(), pos, state);
         getMainNode().setFlags(appeng.api.networking.GridFlags.REQUIRE_CHANNEL).setIdlePowerUsage(0);
         upgrades = UpgradeInventories.forMachine(ModBlocks.LOOP_TICKER.get(), MAX_CARDS + 1, this::onUpgradesChanged);
-        induction = new LoopTickerPower(() -> getMainNode().getGrid(), () -> level.getGameTime(),
-                () -> level instanceof ServerLevel && !isRemoved() && LoopTickerPower.installed(upgrades));
     }
 
     private void onUpgradesChanged() {
         saveChanges();
         if (level instanceof ServerLevel) level.invalidateCapabilities(getBlockPos());
-    }
-
-    public appeng.helpers.ForgeEnergyAdapter inductionPort() {
-        return induction.port();
     }
 
     @Override
@@ -120,7 +114,9 @@ public final class LoopTickerBlockEntity extends AENetworkedBlockEntity
     /** Additive ticks preserve the world clock and other accelerators' schedules. */
     public void accelerate() {
         if (!(level instanceof ServerLevel server) || !getMainNode().isActive()) return;
-        BlockPos target = getBlockPos().relative(facing());
+        Direction face = facing();
+        induction.push(server, getBlockPos(), face, getMainNode().getGrid(), LoopTickerPower.installed(upgrades));
+        BlockPos target = getBlockPos().relative(face);
         com.example.ae2lightoptimizer.integration.LoopTickerTarget.accelerate(this, server, target, rate());
     }
 }
