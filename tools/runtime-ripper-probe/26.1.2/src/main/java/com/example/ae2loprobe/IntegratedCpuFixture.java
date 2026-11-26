@@ -181,6 +181,9 @@ final class IntegratedCpuFixture {
                     if (!plan.isDone()) return;
                     var order = plan.get();
                     check(!order.simulation(), "native CPU plan is missing materials: " + order.missingItems());
+                    cpu.cells().setItemDirect(18, ModItems.INFINITE_LOOP_STORAGE_CELL.get().getDefaultInstance());
+                    check(cluster.getAvailableStorage() == Long.MAX_VALUE && cluster.getCoProcessors() == Integer.MAX_VALUE - 1,
+                            "finite disks changed infinite capacity");
                     var grid = cluster.getGrid();
                     check(grid.getCraftingService().submitJob(order, null, null, false,
                             new MachineSource(grid::getPivot)).successful(), "AE2 auto-selection rejected the native CPU job");
@@ -196,7 +199,11 @@ final class IntegratedCpuFixture {
                     var inv = cluster.getGrid().getStorageService().getInventory();
                     check(inv.getAvailableStacks().get(AEItemKey.of(Items.OAK_PLANKS)) == 32, "native CPU output");
                     check(inv.getAvailableStacks().get(AEItemKey.of(Items.OAK_LOG)) == 8, "native CPU material debit");
+                    cpu.cells().setItemDirect(18, ItemStack.EMPTY);
+                    check(cpu.getCluster() == cluster && cluster.getAvailableStorage() == 6144
+                            && cluster.getCoProcessors() == 8, "finite totals did not return after the infinite job");
                     report.put("nativePlanksCrafted", 32);
+                    report.put("infiniteNativeOrderCompleted", true);
                     report.put("feAccepted", appliedFluxReceived);
                     for (var pos : List.of(BLOCK_TICKER, PART_TICKER)) {
                         var furnace = (AbstractFurnaceBlockEntity) level.getBlockEntity(pos.relative(INPUT));
@@ -215,6 +222,20 @@ final class IntegratedCpuFixture {
     }
 
     private static void checkCpuAndRecipe() {
+        var infinite = ModItems.INFINITE_LOOP_STORAGE_CELL.get().getDefaultInstance();
+        cpu.cells().setItemDirect(18, infinite);
+        check(cluster.getAvailableStorage() == Long.MAX_VALUE, "single infinite disk storage");
+        check(cluster.getCoProcessors() == Integer.MAX_VALUE - 1, "single infinite disk co-processors");
+        report.put("infiniteStorageBytes", cluster.getAvailableStorage());
+        report.put("infiniteCoprocessors", cluster.getCoProcessors());
+        cpu.cells().setItemDirect(17, infinite.copy());
+        check(cluster.getAvailableStorage() == Long.MAX_VALUE
+                && cluster.getCoProcessors() == Integer.MAX_VALUE - 1, "two infinite disks overflowed");
+        cpu.cells().setItemDirect(17, ItemStack.EMPTY);
+        cpu.cells().setItemDirect(18, ItemStack.EMPTY);
+        check(cpu.getCluster() == cluster && cluster.getAvailableStorage() == 0 && cluster.getCoProcessors() == 0,
+                "removing all infinite disks did not restore the original empty CPU");
+        report.put("infiniteDisksHotPlugged", true);
         cpu.cells().setItemDirect(0, AEItems.ITEM_CELL_4K.stack());
         check(cluster.getAvailableStorage() == 4096 && cluster.getCoProcessors() == 0, "item disk contribution");
         cpu.cells().setItemDirect(1, AEItems.FLUID_CELL_256K.stack());

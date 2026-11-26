@@ -27,7 +27,7 @@ For portable access, combine an ME Chest and an Energy Cell with the matching Lo
 
 ### Loop Integrated CPU
 
-Use the 20 storage-cell slots to configure a native AE2 crafting CPU. Item cells add their rated bytes to crafting storage. Fluid cells add one co-processor per 256 rated bytes. A 256k fluid cell adds 1,024 co-processors. Loop cells and Quantum Omni cells contribute to both totals using their rated tier. A disk's contents and partition do not change its contribution. Right-click to manage the cells. On an active CPU, use the top-right tab or sneak-right-click to open the native crafting status.
+Use the 20 storage-cell slots to configure a native AE2 crafting CPU. Item cells add the same number of bytes as the matching AE2 crafting storage block. For example, a 1k item cell adds 1,024 bytes, equal to one 1k Crafting Storage. Fluid cells add one co-processor per 256 rated bytes. A 256k fluid cell adds 1,024 co-processors. Loop cells and Quantum Omni cells contribute to both totals using their rated tier. An Infinite Loop Storage Cell gives the CPU unlimited crafting storage and co-processor capacity. A disk's contents and partition do not change its contribution. Right-click to manage the cells. On an active CPU, use the top-right tab or sneak-right-click to open the native crafting status.
 
 In a crafting table, put iron ingots in the corners, Loop Crystals at top center, middle left and middle right, an AE2 Crafting Unit at the center and an ME Drive at bottom center.
 
@@ -123,7 +123,7 @@ END
 
 ### 循环集成 CPU
 
-右键打开两组共 20 个磁盘槽。物品磁盘按面值提供合成存储，流体磁盘每 256 字节提供一个协处理器，所以 256k 流体盘提供 1,024 个。循环磁盘和 Quantum Omni 量子盘按标称档位同时贡献两项数值。磁盘内的资源和分区不影响贡献。在线时可点击右上角标签或潜行右键打开 AE2 原生合成状态。
+右键打开两组共 20 个磁盘槽。物品磁盘按同档原版合成存储单元的字节数计入，例如 1k 物品盘与 1k 合成存储单元都提供 1,024 字节。流体磁盘每 256 字节提供一个协处理器，所以 256k 流体盘提供 1,024 个。循环磁盘和 Quantum Omni 量子盘按标称档位同时贡献两项数值。无限循环存储磁盘为 CPU 提供无限合成存储和协处理能力。磁盘内的资源和分区不影响贡献。在线时可点击右上角标签或潜行右键打开 AE2 原生合成状态。
 
 工作台四角放铁锭，上中、左中、右中放循环水晶，正中放 AE2 合成单元，下中放 ME 磁盘驱动器。
 

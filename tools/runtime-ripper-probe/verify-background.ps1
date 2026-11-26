@@ -248,6 +248,11 @@ function Assert-GameplayEvidence([string]$world) {
         if ($cpuSlots -ne $referenceSlots -or @((ConvertFrom-Json -InputObject $cpuSlots)).Count -ne 20) {
             throw 'Native screen slot geometry differs from the extended ME drive'
         }
+        if ($report.infiniteStorageBytes -ne [long]::MaxValue -or
+                $report.infiniteCoprocessors -ne ([int]::MaxValue - 1) -or $report.infiniteDisksHotPlugged -ne $true -or
+                $report.infiniteNativeOrderCompleted -ne $true) {
+            throw 'Infinite CPU capacity, hot-plug, or native crafting check failed'
+        }
         if ($report.nativeAutoSelectedCpu -ne $true -or $report.nativePlanksCrafted -ne 32 -or $report.bytesWithCells -ne 6144 -or
                 $report.coprocessorsWithCells -ne 1032 -or $report.quantumDiskPresent -ne $true -or
                 $report.LoopTickerBlockEntityFe -le 0 -or $report.LoopTickerPartFe -le 0) {
