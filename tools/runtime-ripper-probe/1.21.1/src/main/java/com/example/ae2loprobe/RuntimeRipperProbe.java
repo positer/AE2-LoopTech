@@ -111,7 +111,8 @@ public final class RuntimeRipperProbe {
     private static Path output;
     private static Map<String, Long> beforeStock;
 
-    public RuntimeRipperProbe() {
+    public RuntimeRipperProbe(net.neoforged.bus.api.IEventBus modBus) {
+        if (IntegratedCpuFixture.ENABLED) modBus.addListener(IntegratedCpuFixture::registerReceivers);
         NeoForge.EVENT_BUS.addListener(RuntimeRipperProbe::onPlayer);
         NeoForge.EVENT_BUS.addListener(RuntimeRipperProbe::onServerStarted);
         NeoForge.EVENT_BUS.addListener(RuntimeRipperProbe::onTick);

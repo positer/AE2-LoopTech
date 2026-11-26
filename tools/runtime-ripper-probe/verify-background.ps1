@@ -260,7 +260,12 @@ function Assert-GameplayEvidence([string]$world) {
         }
         if ($report.nativeAutoSelectedCpu -ne $true -or $report.nativePlanksCrafted -ne 32 -or $report.bytesWithCells -ne 6144 -or
                 $report.coprocessorsWithCells -ne 1032 -or $report.quantumDiskPresent -ne $true -or
-                $report.LoopTickerBlockEntityFe -le 0 -or $report.LoopTickerPartFe -le 0) {
+                $report.LoopTickerBlockEntityFe -ne 40960 -or $report.LoopTickerPartFe -ne 40960 -or
+                $report.tickerFeSampleTicks -ne 10 -or $report.tickerSampleTicks -lt 10 -or
+                $report.controlFurnaceTicks -ne $report.tickerSampleTicks -or
+                $report.blockStackedFurnaceTicks -ne (10 * $report.tickerSampleTicks) -or
+                $report.partStackedFurnaceTicks -ne (10 * $report.tickerSampleTicks) -or
+                $report.activeCycleSurvived -ne $true -or $report.tickerCardRemovalStoppedFe -ne $true) {
             throw 'Integrated CPU capacity, native crafting, or induction power evidence failed'
         }
     }

@@ -4,13 +4,13 @@
 
 ### English
 
-- Both Loop Tick Accelerator forms can accelerate other accelerators. Direct inputs to a shared target add; along a chain, each extra activation runs that accelerator at its selected rate. A link that returns to an accelerator already in its current chain stops there. Each originating activation allows at most 8,192 scheduled target steps to protect the server from runaway tick cascades. This guard does not limit Induction Card FE output.
-- Fixed the Applied Flux Induction Card on both Loop Tick Accelerator forms in Minecraft 1.21.1 and 26.1.2. The accelerator now draws power from the ME network and actively sends Forge Energy to the adjacent machine, using only the face that touches the green block face or the cable part's mounting face. It no longer exposes an FE port for external push or pull. Each accelerator attempts the full amount supported by the target's FE interface every server tick. The card imposes no additional limit; actual output depends on ME supply and machine acceptance.
+- Fixed Applied Flux Induction Cards in both Loop Tick Accelerator forms on Minecraft 1.21.1 and 26.1.2. With a card installed, the accelerator draws power from the ME network and sends FE once per server tick to the adjacent machine. The machine must accept FE on the face touching the block’s green face or the cable part’s mounting face. The conversion uses AE2’s energy rate. The ME supply and the receiver’s FE interface determine how much energy is delivered.
+- Loop Tick Accelerator blocks and cable parts can now accelerate other accelerators. Rates add when several accelerators aim at the same target. In a chain, each activation applies the downstream accelerator’s configured rate. A chain stops following a path when it reaches an accelerator already on that path. Each initial activation is limited to 8,192 target steps to protect server performance.
 
 ### 简体中文
 
-- 方块和线缆部件都可加速其他进刻器。多台对准同一目标时，追加次数相加；串联时，每次额外激活仍按下游进刻器设置的倍率执行。链条遇到当前路径中已激活的进刻器会截断该回环。为防止极端布线拖垮服务器，每次初始激活最多执行 8,192 个目标步骤；这不限制感应卡的 FE 输出。
-- 修复 Minecraft 1.21.1 与 26.1.2 中两种循环进刻器的 Applied Flux 感应卡。装卡后，进刻器从 ME 网络取电，主动向绿色面或线缆部件安装面所朝向的相邻机器输出 FE，仅使用该机器与进刻器相接的一面。进刻器不再提供供外部设备灌入或抽取 FE 的端口。每个服务器 tick 都按目标 FE 接口所支持的最大量尝试输出，感应卡不额外限流；实际输出取决于 ME 网络可供电量和目标机器接收量。
+- 修复 Minecraft 1.21.1 和 26.1.2 中两种循环进刻器的 Applied Flux 感应卡。装卡后，进刻器每个服务端刻从 ME 网络取电，按 AE2 的能量换算率向相邻机器输出 FE。接收面须贴着方块的绿色面或线缆部件的安装面。实际输出量取决于 ME 的可用电量和目标机器的 FE 接收能力。
+- 循环进刻器方块和线缆部件现在可以加速其他进刻器。多台对准同一目标时，追加次数相加。串联时，下游进刻器每次被激活都按自身设置的倍率执行。同一路径再次遇到已经过的进刻器时，该路径停止。每次初始激活最多执行 8,192 个目标步骤，以保护服务端性能。
 
 ## 0.1.2
 

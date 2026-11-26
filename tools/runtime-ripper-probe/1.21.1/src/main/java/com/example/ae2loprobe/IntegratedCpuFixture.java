@@ -2,6 +2,9 @@ package com.example.ae2loprobe;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
+import appeng.api.config.PowerUnit;
+import appeng.api.networking.IManagedGridNode;
+import appeng.blockentity.networking.EnergyCellBlockEntity;
 import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.networking.crafting.CalculationStrategy;
 import appeng.api.networking.crafting.ICraftingPlan;
@@ -43,6 +46,9 @@ import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.energy.EnergyStorage;
+import net.minecraft.world.inventory.ContainerData;
 
 final class IntegratedCpuFixture {
     static final boolean ENABLED = "integrated_cpu".equals(System.getProperty("ae2lo.probe.chain"));
@@ -69,7 +75,38 @@ final class IntegratedCpuFixture {
     private static CraftingCPUCluster cluster;
     private static Future<ICraftingPlan> plan;
     private static int ticks;
-    private static long appliedFluxReceived;
+    private static final int FE_PER_TICK = 4096;
+    private static final int SAMPLE_TICKS = 10;
+    private static final MeteredReceiver BLOCK_RECEIVER = new MeteredReceiver();
+    private static final MeteredReceiver PART_RECEIVER = new MeteredReceiver();
+    private static final BlockPos CONTROL_FURNACE = CPU.offset(0, 0, 7);
+    private static final BlockPos CYCLE_LEFT = CPU.offset(-6, 0, 7);
+    private static final BlockPos CYCLE_RIGHT = CYCLE_LEFT.east();
+    private static Direction receiverFace = INPUT;
+    private static int receiverFirstTick = Integer.MIN_VALUE;
+    private static int receiverLastTick = Integer.MAX_VALUE;
+    private static LoopTickerBlockEntity directTicker;
+    private static LoopTickerBlockEntity blockChain;
+    private static LoopTickerBlockEntity partChain;
+    private static LoopTickerBlockEntity cycleLeft;
+    private static LoopTickerBlockEntity cycleRight;
+    private static int sampleStarted;
+    private static int blockCookBefore;
+    private static int partCookBefore;
+    private static int controlCookBefore;
+    private static double blockAeBefore;
+    private static double partAeBefore;
+
+    static void registerReceivers(RegisterCapabilitiesEvent event) {
+        event.registerBlock(Capabilities.EnergyStorage.BLOCK, (world, pos, state, entity, side) -> {
+            if (world != level || side != receiverFace) return null;
+            int now = level.getServer().getTickCount();
+            if (now < receiverFirstTick || now > receiverLastTick) return null;
+            if (pos.equals(BLOCK_TICKER.relative(INPUT))) return BLOCK_RECEIVER;
+            if (pos.equals(PART_TICKER.relative(INPUT))) return PART_RECEIVER;
+            return null;
+        }, Blocks.FURNACE);
+    }
 
     static void start(MinecraftServer server, ServerPlayer tester, Path directory) {
         level = server.overworld();
@@ -105,19 +142,24 @@ final class IntegratedCpuFixture {
             level.setBlockAndUpdate(EXTENDED, extDrive.defaultBlockState());
             ((DriveBlockEntity) level.getBlockEntity(DRIVE)).getInternalInventory()
                     .setItemDirect(0, AEItems.ITEM_CELL_1K.stack());
-            var ticker = ModBlocks.LOOP_TICKER.get();
-            level.setBlockAndUpdate(BLOCK_TICKER, ticker.getOrientationStrategy().setFacing(ticker.defaultBlockState(), INPUT));
-            blockTicker = (LoopTickerBlockEntity) level.getBlockEntity(BLOCK_TICKER);
+            blockTicker = placeTicker(BLOCK_TICKER, INPUT, 2);
+            var blockFurnace = BLOCK_TICKER.relative(INPUT);
+            directTicker = placeTicker(blockFurnace.west(), Direction.EAST, 3);
+            blockChain = placeTicker(BLOCK_TICKER.east(), Direction.WEST, 2);
+            cycleLeft = placeTicker(CYCLE_LEFT, Direction.EAST, 4);
+            cycleRight = placeTicker(CYCLE_RIGHT, Direction.WEST, 4);
             level.setBlockAndUpdate(PART_TICKER, AEBlocks.CABLE_BUS.block().defaultBlockState());
             var host = (IPartHost) level.getBlockEntity(PART_TICKER);
             host.addPart(AEParts.GLASS_CABLE.item(AEColor.TRANSPARENT), INPUT, null);
             partTicker = host.addPart(ModItems.LOOP_TICKER_PART.get(), INPUT, null);
-            for (var pos : List.of(BLOCK_TICKER, PART_TICKER)) {
-                level.setBlockAndUpdate(pos.below(), AEBlocks.DENSE_ENERGY_CELL.block().defaultBlockState());
-                level.setBlockAndUpdate(pos.relative(INPUT), Blocks.FURNACE.defaultBlockState());
-                var furnace = (AbstractFurnaceBlockEntity) level.getBlockEntity(pos.relative(INPUT));
-                furnace.setItem(0, new ItemStack(Items.RAW_IRON, 16));
-                furnace.setItem(1, new ItemStack(Items.COAL, 8));
+            partTicker.setRate(3);
+            charge(PART_TICKER.below());
+            partChain = placeTicker(PART_TICKER.east(), Direction.WEST, 2);
+            for (var pos : List.of(blockFurnace, PART_TICKER.relative(INPUT), CONTROL_FURNACE)) {
+                level.setBlockAndUpdate(pos, Blocks.FURNACE.defaultBlockState());
+                var furnace = (AbstractFurnaceBlockEntity) level.getBlockEntity(pos);
+                furnace.setItem(0, new ItemStack(Items.RAW_IRON, 32));
+                furnace.setItem(1, new ItemStack(Items.COAL, 16));
             }
             ProbeState.phase = "cpu_grid_start";
         } catch (Exception error) {
@@ -141,8 +183,50 @@ final class IntegratedCpuFixture {
                             && !((LoopIntegratedCpuBlockEntity) level.getBlockEntity(OFFLINE)).isPowered(), "offline state");
                     check(!((LoopIntegratedCpuBlockEntity) level.getBlockEntity(INVALID)).isFormed(), "invalid shape formed");
                     checkCpuAndRecipe();
-                    checkFe(BLOCK_TICKER, blockTicker);
-                    checkFe(PART_TICKER, partTicker);
+                    for (var ticker : List.of(blockTicker, directTicker, blockChain, partChain, cycleLeft, cycleRight)) {
+                        check(ticker.getMainNode().isActive(), "block ticker is inactive: " + ticker.getBlockPos());
+                    }
+                    check(partTicker.getMainNode().isActive(), "part ticker is inactive");
+                    check(BLOCK_RECEIVER.getEnergyStored() == 0 && PART_RECEIVER.getEnergyStored() == 0,
+                            "ticker output FE without a card");
+                    installCard(BLOCK_TICKER, blockTicker);
+                    installCard(PART_TICKER, partTicker);
+                    sampleStarted = ticks;
+                    ProbeState.phase = "ticker_wrong_side";
+                }
+                case "ticker_wrong_side" -> {
+                    if (ticks - sampleStarted < SAMPLE_TICKS) return;
+                    check(BLOCK_RECEIVER.getEnergyStored() == 0 && PART_RECEIVER.getEnergyStored() == 0,
+                            "ticker pushed FE to a non-touching receiver face");
+                    // AE2 and NeoForge can run the two forms on opposite sides of this callback.
+                    receiverFirstTick = level.getServer().getTickCount() + 1;
+                    receiverLastTick = receiverFirstTick + SAMPLE_TICKS - 1;
+                    receiverFace = INPUT.getOpposite();
+                    sampleStarted = ticks;
+                    blockCookBefore = furnaceProgress(BLOCK_TICKER.relative(INPUT));
+                    partCookBefore = furnaceProgress(PART_TICKER.relative(INPUT));
+                    controlCookBefore = furnaceProgress(CONTROL_FURNACE);
+                    blockAeBefore = gridEnergy(blockTicker.getMainNode());
+                    partAeBefore = gridEnergy(partTicker.getMainNode());
+                    ProbeState.phase = "ticker_output_and_stacking";
+                }
+                case "ticker_output_and_stacking" -> {
+                    if (level.getServer().getTickCount() <= receiverLastTick) return;
+                    verifyTickerResults();
+                    blockTicker.getUpgrades().setItemDirect(LoopTickerHost.INDUCTION_SLOT, ItemStack.EMPTY);
+                    partTicker.getUpgrades().setItemDirect(LoopTickerHost.INDUCTION_SLOT, ItemStack.EMPTY);
+                    receiverFirstTick = Integer.MIN_VALUE;
+                    receiverLastTick = Integer.MAX_VALUE;
+                    sampleStarted = ticks;
+                    ProbeState.phase = "ticker_card_removed";
+                }
+                case "ticker_card_removed" -> {
+                    if (ticks - sampleStarted < SAMPLE_TICKS) return;
+                    check(BLOCK_RECEIVER.getEnergyStored() == FE_PER_TICK * SAMPLE_TICKS
+                            && PART_RECEIVER.getEnergyStored() == FE_PER_TICK * SAMPLE_TICKS, "ticker output after card removal");
+                    report.put("tickerCardRemovalStoppedFe", true);
+                    installCard(BLOCK_TICKER, blockTicker);
+                    installCard(PART_TICKER, partTicker);
                     ProbeState.screenshotRequest = WORLD_FRAME;
                     ProbeState.phase = "cpu_world_frame";
                 }
@@ -204,15 +288,14 @@ final class IntegratedCpuFixture {
                             && cluster.getCoProcessors() == 8, "finite totals did not return after the infinite job");
                     report.put("nativePlanksCrafted", 32);
                     report.put("infiniteNativeOrderCompleted", true);
-                    report.put("feAccepted", appliedFluxReceived);
                     for (var pos : List.of(BLOCK_TICKER, PART_TICKER)) {
                         var furnace = (AbstractFurnaceBlockEntity) level.getBlockEntity(pos.relative(INPUT));
                         int outputCount = furnace.getItem(2).getCount();
-                        check(outputCount > 0, "FE-powered furnace acceleration produced no output");
+                        check(outputCount > 0, "furnace acceleration produced no output");
                         report.put(pos.equals(BLOCK_TICKER) ? "blockFurnaceOutput" : "partFurnaceOutput", outputCount);
                     }
                     check(blockTicker.getMainNode().isActive() && partTicker.getMainNode().isActive(),
-                            "one FE-powered ticker did not become a functioning network member");
+                            "one ticker lost its active ME network");
                     finish(null);
                 }
             }
@@ -294,9 +377,22 @@ final class IntegratedCpuFixture {
                 new MachineSource(grid::getPivot)) == 16, "ME drive insert failed");
     }
 
-    private static void checkFe(BlockPos pos, LoopTickerHost host) {
-        var cap = Capabilities.EnergyStorage.BLOCK;
-        check(level.getCapability(cap, pos, INPUT) == null, "FE port available without card");
+    private static LoopTickerBlockEntity placeTicker(BlockPos pos, Direction face, int rate) {
+        var block = ModBlocks.LOOP_TICKER.get();
+        level.setBlockAndUpdate(pos, block.getOrientationStrategy().setFacing(block.defaultBlockState(), face));
+        var ticker = (LoopTickerBlockEntity) level.getBlockEntity(pos);
+        ticker.setRate(rate);
+        charge(pos.below());
+        return ticker;
+    }
+
+    private static void charge(BlockPos pos) {
+        level.setBlockAndUpdate(pos, AEBlocks.DENSE_ENERGY_CELL.block().defaultBlockState());
+        var cell = (EnergyCellBlockEntity) level.getBlockEntity(pos);
+        check(cell.injectAEPower(1_000_000, Actionable.MODULATE) == 0, "could not charge fixture cell");
+    }
+
+    private static void installCard(BlockPos pos, LoopTickerHost host) {
         var card = BuiltInRegistries.ITEM.getOptional(ResourceLocation.fromNamespaceAndPath("appflux", "induction_card")).orElseThrow();
         var upgrades = host.getUpgrades();
         check(LoopTickerPower.cardAvailable() && upgrades.getMaxInstalled(card) == 1, "induction limit");
@@ -305,31 +401,74 @@ final class IntegratedCpuFixture {
         check(!upgrades.isItemValid(0, card.getDefaultInstance()), "second induction card accepted");
         check(host.maxRate() == 4, "induction card counted as speed card");
         for (var side : Direction.values()) {
-            if (side != INPUT) check(level.getCapability(cap, pos, side) == null, "wrong FE input side: " + side);
+            check(level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, side) == null, "ticker exposed an FE port: " + side);
         }
-        check(level.getCapability(cap, pos, null) == null, "unsided input accepted");
-        var port = level.getCapability(cap, pos, INPUT);
-        check(port != null, "missing FE port at " + pos);
-        var grid = (host instanceof LoopTickerBlockEntity block ? block.getMainNode() : partTicker.getMainNode()).getGrid();
-        var network = grid.getEnergyService();
-        double previous = network.extractAEPower(Double.MAX_VALUE, Actionable.SIMULATE, PowerMultiplier.ONE);
-        int simulated = receive(port, Integer.MAX_VALUE, true);
-        check(simulated > 0 && network.extractAEPower(Double.MAX_VALUE, Actionable.SIMULATE, PowerMultiplier.ONE) == previous, "FE simulation mutated AE power");
-        int real = receive(port, Integer.MAX_VALUE, false);
-        double stored = network.extractAEPower(Double.MAX_VALUE, Actionable.SIMULATE, PowerMultiplier.ONE);
-        check(real == simulated && stored > previous, "simulated/committed FE mismatch: " + real
-                + "/" + simulated + " AE " + previous + " -> " + stored);
-        report.put(host.getClass().getSimpleName() + "AddedAe", stored - previous);
-        appliedFluxReceived += real;
-        check(receive(port, Integer.MAX_VALUE, false) == 0, "full AE grid rejected surplus FE incorrectly");
-        upgrades.setItemDirect(LoopTickerHost.INDUCTION_SLOT, ItemStack.EMPTY);
-        check(level.getCapability(cap, pos, INPUT) == null && receive(port, 1, false) == 0, "stale FE port after card removal");
-        upgrades.setItemDirect(LoopTickerHost.INDUCTION_SLOT, card.getDefaultInstance());
-        report.put(host.getClass().getSimpleName() + "Fe", real);
+        check(level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, null) == null, "ticker exposed an unsided FE port");
     }
 
-    private static int receive(net.neoforged.neoforge.energy.IEnergyStorage port, int amount, boolean simulate) {
-        return port.receiveEnergy(amount, simulate);
+    private static int furnaceProgress(BlockPos pos) throws ReflectiveOperationException {
+        var furnace = (AbstractFurnaceBlockEntity) level.getBlockEntity(pos);
+        var field = AbstractFurnaceBlockEntity.class.getDeclaredField("dataAccess");
+        field.setAccessible(true);
+        var data = (ContainerData) field.get(furnace);
+        return furnace.getItem(2).getCount() * data.get(AbstractFurnaceBlockEntity.DATA_COOKING_TOTAL_TIME)
+                + data.get(AbstractFurnaceBlockEntity.DATA_COOKING_PROGRESS);
+    }
+
+    private static double gridEnergy(IManagedGridNode node) {
+        return node.getGrid().getEnergyService().extractAEPower(Double.MAX_VALUE, Actionable.SIMULATE, PowerMultiplier.ONE);
+    }
+
+    private static void verifyTickerResults() throws ReflectiveOperationException {
+        int blockTicks = furnaceProgress(BLOCK_TICKER.relative(INPUT)) - blockCookBefore;
+        int partTicks = furnaceProgress(PART_TICKER.relative(INPUT)) - partCookBefore;
+        int controlTicks = furnaceProgress(CONTROL_FURNACE) - controlCookBefore;
+        double blockDebit = blockAeBefore - gridEnergy(blockTicker.getMainNode());
+        double partDebit = partAeBefore - gridEnergy(partTicker.getMainNode());
+        long blockFe = BLOCK_RECEIVER.getEnergyStored();
+        long partFe = PART_RECEIVER.getEnergyStored();
+        int elapsed = ticks - sampleStarted;
+        report.put("tickerSampleTicks", elapsed);
+        report.put("tickerFeSampleTicks", SAMPLE_TICKS);
+        report.put("blockFeByServerTick", new LinkedHashMap<>(BLOCK_RECEIVER.acceptedByTick));
+        report.put("partFeByServerTick", new LinkedHashMap<>(PART_RECEIVER.acceptedByTick));
+        report.put("blockStackedFurnaceTicks", blockTicks);
+        report.put("partStackedFurnaceTicks", partTicks);
+        report.put("controlFurnaceTicks", controlTicks);
+        report.put("LoopTickerBlockEntityFe", blockFe);
+        report.put("LoopTickerPartFe", partFe);
+        report.put("blockGridDebitedAe", blockDebit);
+        report.put("partGridDebitedAe", partDebit);
+        check(controlTicks == elapsed, "furnace control tick count: " + controlTicks);
+        check(blockTicks == elapsed * (1 + 2 + 3 + 2 * 2), "block stacking tick count: " + blockTicks);
+        check(partTicks == elapsed * (1 + 3 + 2 * 3), "part stacking tick count: " + partTicks);
+        check(blockFe == FE_PER_TICK * SAMPLE_TICKS && partFe == FE_PER_TICK * SAMPLE_TICKS,
+                "FE transfer count includes missing or duplicated ticks: " + blockFe + "/" + partFe);
+        for (int tick = receiverFirstTick; tick <= receiverLastTick; tick++) {
+            check(BLOCK_RECEIVER.acceptedByTick.getOrDefault(tick, 0) == FE_PER_TICK
+                    && PART_RECEIVER.acceptedByTick.getOrDefault(tick, 0) == FE_PER_TICK,
+                    "FE output was missing or duplicated on server tick " + tick);
+        }
+        double expectedAe = PowerUnit.FE.convertTo(PowerUnit.AE, FE_PER_TICK * SAMPLE_TICKS);
+        check(blockDebit + 0.001 >= expectedAe && partDebit + 0.001 >= expectedAe, "grid did not fund FE output");
+        report.put("activeCycleSurvived", cycleLeft.getMainNode().isActive() && cycleRight.getMainNode().isActive());
+    }
+
+    private static final class MeteredReceiver extends EnergyStorage {
+        private final LinkedHashMap<Integer, Integer> acceptedByTick = new LinkedHashMap<>();
+
+        private MeteredReceiver() {
+            super(Integer.MAX_VALUE, FE_PER_TICK, 0);
+        }
+
+        @Override
+        public int receiveEnergy(int amount, boolean simulate) {
+            int accepted = super.receiveEnergy(amount, simulate);
+            if (!simulate && accepted > 0) {
+                acceptedByTick.merge(level.getServer().getTickCount(), accepted, Integer::sum);
+            }
+            return accepted;
+        }
     }
 
     private static void open(BlockPos pos) {

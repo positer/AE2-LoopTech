@@ -6,6 +6,12 @@ AE2 LoopTech（应用能源：循环科技，AE2LT）的双语项目主页位于
 
 两代 `integration/LoopTickerTarget.java` 执行朝向目标的追加 tick。部件通过 AE2 网格调度，方块通过现有服务器 tick 服务调用。六向方块模型、物品模型和工作台贴图由 `tools/verify_loop_machine_assets.py` 对照同代 AE2 校验。
 
+## 2026-11-26 循环进刻器 0.1.3
+
+- 两代 `integration/LoopTickerPower.java` 从 ME 网络为相邻机器供电。共享 `LoopTickerEnergyTransfer.java` 负责整 FE 换算、实际扣款、退款和逐刻去重。
+- 两代 `integration/LoopTickerTarget.java` 识别进刻器方块与线缆部件。共享 `LoopTickerCascade.java` 负责链式调度、按路径截断环路和限制单次激活的工作量。
+- 两代 `IntegratedCpuFixture.java` 使用带感应卡的原生 ME 节点、定向 NeoForge FE 接收夹具和原版熔炉，测量输出方向、叠加效率、拔卡和循环布线。玩法说明见 `docs/loop-machines.md`。
+
 ## 2026-11-26 循环集成 CPU 和进刻器 FE 输入
 
 - 两代 `block/LoopIntegratedCpuBlock.java` 沿用原生合成单元结构和交互，其中普通右键打开 20 槽磁盘菜单。对应方块实体保存磁盘并汇总标称容量，`mixin/IntegratedCpuCalculatorMixin.java` 、`IntegratedCpuClusterMixin.java` 和 `IntegratedCpuDiscoveryMixin.java` 分别接入成形、动态容量和原生 CPU 发现。
