@@ -13,6 +13,8 @@ import net.neoforged.neoforge.client.event.InitializeClientRegistriesEvent;
 @Mod(value = Ae2LightOptimizer.MOD_ID, dist = Dist.CLIENT)
 public final class Ae2LightOptimizerClient {
     private static void registerScreens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
+        appeng.client.InitScreens.register(event, com.example.ae2lightoptimizer.world.WorldSimulatorMenu.TYPE.get(),
+                WorldSimulatorScreen::new, "/screens/ae2lpt_loop_world_simulator.json");
         appeng.client.InitScreens.register(event,
                 com.example.ae2lightoptimizer.menu.LoopIntegratedCpuMenu.TYPE.get(),
                 LoopIntegratedCpuScreen::new, "/screens/ae2lpt_loop_integrated_cpu.json");

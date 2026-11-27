@@ -1,0 +1,123 @@
+{
+  "includes": [
+    "common/common.json",
+    "common/player_inventory.json",
+    "common/toolbox.json"
+  ],
+  "text": {
+    "dialog_title": {
+      "text": {
+        "translate": "block.ae2lpt.loop_world_simulator"
+      },
+      "position": {
+        "left": 8,
+        "top": 6
+      }
+    }
+  },
+  "generatedBackground": {
+    "width": 176,
+    "height": 199
+  },
+  "slots": {
+    "MACHINE_CRAFTING_GRID": {
+      "left": 29,
+      "top": 31,
+      "grid": "BREAK_AFTER_3COLS"
+    },
+    "MACHINE_OUTPUT": {
+      "left": 126,
+      "top": 49
+    }
+  },
+  "images": {
+    "progressBar": {
+      "texture": "guis/molecular_assembler.png",
+      "srcRect": [
+        176,
+        0,
+        6,
+        18
+      ]
+    },
+    "progressTrack": {
+      "texture": "guis/molecular_assembler.png",
+      "srcRect": [
+        148,
+        48,
+        6,
+        18
+      ]
+    },
+    "sideConfigIcon": {
+      "texture": "guis/ae2lpt_simulator_face_config.png",
+      "srcRect": [
+        0,
+        0,
+        16,
+        16
+      ]
+    }
+  },
+  "widgets": {
+    "progressBar": {
+      "left": 146,
+      "top": 48
+    },
+    "simulatorFluidIn": {
+      "left": 8,
+      "top": 30,
+      "width": 18,
+      "height": 54
+    },
+    "simulatorFluidOut": {
+      "left": 155,
+      "top": 30,
+      "width": 18,
+      "height": 54
+    },
+    "sideClose": {
+      "left": 86,
+      "top": 10,
+      "width": 12,
+      "height": 12
+    },
+    "sideFace_top": {
+      "left": 55,
+      "top": 26,
+      "width": 20,
+      "height": 20
+    },
+    "sideFace_left": {
+      "left": 32,
+      "top": 52,
+      "width": 20,
+      "height": 20
+    },
+    "sideFace_bottom": {
+      "left": 55,
+      "top": 52,
+      "width": 20,
+      "height": 20
+    },
+    "sideFace_right": {
+      "left": 78,
+      "top": 52,
+      "width": 20,
+      "height": 20
+    },
+    "sideFace_front": {
+      "left": 55,
+      "top": 78,
+      "width": 20,
+      "height": 20
+    },
+    "sideFace_back": {
+      "left": 78,
+      "top": 78,
+      "width": 20,
+      "height": 20
+    }
+  },
+  "helpTopic": "ae2lpt:items-blocks-machines/loop_world_simulator.md"
+}

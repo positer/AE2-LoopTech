@@ -270,6 +270,7 @@ public final class MachineAudit {
     public static volatile boolean crystalSpritesReady;
 
     private static void testMachineRecipes() {
+        PortableStorageAudit.run(level, MachineAudit::check);
         var old = net.minecraft.resources.Identifier.parse("ae2lightoptimizer:loop_ticker");
         var current = net.minecraft.resources.Identifier.parse("ae2lpt:loop_ticker");
         var items = net.minecraft.core.registries.BuiltInRegistries.ITEM;
@@ -393,8 +394,20 @@ public final class MachineAudit {
         ticker.setRate(999); check("rate_upper_bound", ticker.rate() == 4);
         var menu = new com.example.ae2lightoptimizer.menu.LoopTickerMenu(
                 com.example.ae2lightoptimizer.menu.LoopTickerMenu.TYPE.get(), 92, player.getInventory(), ticker);
-        check("four_native_upgrade_slots", menu.getSlots(appeng.menu.SlotSemantics.UPGRADE).size() == 4);
-        check("wrong_upgrade_rejected", !menu.getSlots(appeng.menu.SlotSemantics.UPGRADE).get(0).mayPlace(AEItems.INVERTER_CARD.stack()));
+        var slots = menu.getSlots(appeng.menu.SlotSemantics.UPGRADE);
+        var induction = net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(
+                net.minecraft.resources.Identifier.fromNamespaceAndPath("appflux", "induction_card"));
+        check("four_speed_slots_plus_optional_induction", slots.size() == (induction.isPresent() ? 5 : 4));
+        var speedSlots = slots.subList(0, 4);
+        check("four_native_speed_slots", speedSlots.stream().allMatch(slot -> slot.mayPlace(AEItems.SPEED_CARD.stack())));
+        check("wrong_upgrade_rejected", speedSlots.stream().noneMatch(slot -> slot.mayPlace(AEItems.INVERTER_CARD.stack())));
+        if (induction.isPresent()) {
+            var card = new ItemStack(induction.orElseThrow());
+            check("four_speed_slots_reject_induction", speedSlots.stream().noneMatch(slot -> slot.mayPlace(card)));
+            var dedicated = slots.get(4);
+            check("dedicated_induction_slot_accepts_only_induction", dedicated.mayPlace(card)
+                    && !dedicated.mayPlace(AEItems.SPEED_CARD.stack()) && !dedicated.mayPlace(AEItems.INVERTER_CARD.stack()));
+        }
         menu.clickMenuButton(player, 2); check("server_rate_action", ticker.rate() == 2); ticker.setRate(4);
     }
     private static void startCompat() throws Exception {

@@ -12,7 +12,10 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(java_version as int)
 repositories {
     exclusiveContent {
         forRepository { maven { url = 'https://api.modrinth.com/maven' } }
-        filter { includeModule 'maven.modrinth', 'ae2-crystal-science' }
+        filter {
+            includeModule 'maven.modrinth', 'ae2-crystal-science'
+            includeModule 'maven.modrinth', 'pf-emi'
+        }
     }
     mavenCentral()
     maven { url = 'https://maven.blamejared.com' }
@@ -22,6 +25,7 @@ dependencies {
     compileOnly 'maven.modrinth:ae2-crystal-science:9wyPpLcp'
     compileOnly "org.appliedenergistics:appliedenergistics2:${ae2_version}"
     compileOnly 'mezz.jei:jei-26.1.2-neoforge-api:29.21.0.68'
+    compileOnly 'maven.modrinth:pf-emi:N2tHzL14'
     runtimeOnly "org.appliedenergistics:appliedenergistics2:${ae2_version}"
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'

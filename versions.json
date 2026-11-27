@@ -4,7 +4,7 @@
   "registry_namespace": "ae2lpt",
   "display_name": "AE2 LoopTech",
   "short_id": "ae2lpt",
-  "mod_version": "0.1.3",
+  "mod_version": "0.1.4",
   "entries": [
     {
       "minecraft": "1.21.1",

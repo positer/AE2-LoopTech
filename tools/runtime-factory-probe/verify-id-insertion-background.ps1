@@ -1,14 +1,17 @@
 param(
     [Parameter(Mandatory=$true)][ValidateSet('1.21.1','26.1.2')][string]$Generation,
     [Parameter(Mandatory=$true)][ValidateSet('none','jei','emi')][string]$Mode,
-    [Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_.-]+$')][string]$EvidenceName
+    [Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9_.-]+$')][string]$EvidenceName,
+    [string]$ModernEmiJar
 )
 # Isolate real viewer input tests; the delegated runner owns gameplay, native input and normal shutdown.
 $ErrorActionPreference = 'Stop'
 $Mode = $Mode.ToLowerInvariant()
-if ($Generation -eq '26.1.2' -and $Mode -eq 'emi') {
-    throw 'No pinned official EMI build exists for 26.1.2; modern EMI cannot be tested by this wrapper'
+$useLocalModernEmi = $Generation -eq '26.1.2' -and $Mode -eq 'emi'
+if ($useLocalModernEmi -and (-not $ModernEmiJar -or -not (Test-Path -LiteralPath $ModernEmiJar -PathType Leaf))) {
+    throw '26.1.2 EMI acceptance requires -ModernEmiJar pointing to the pinned local 26.1.2 NeoForge snapshot'
 }
+if (-not $useLocalModernEmi -and $ModernEmiJar) {throw '-ModernEmiJar is only valid for 26.1.2 EMI isolation'}
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $taskRoot "versions/neoforge-$Generation"))
 $runRoot = Join-Path $projectRoot 'run'
@@ -73,6 +76,12 @@ function Assert-NoActiveGenerationClient {
 }
 function Get-PinnedViewer {
     if ($Mode -eq 'none') { return $null }
+    if ($useLocalModernEmi) {
+        $localSource=(Get-Item -LiteralPath $ModernEmiJar).FullName
+        $expected='51a247848482658f9442ab036fc9e1ff91c4c5ac2dc360114dedde28cb1e9e0e'
+        if ((Get-FileSha256 $localSource) -cne $expected) { throw 'The supplied 26.1.2 EMI snapshot does not match the tested SHA-256' }
+        return [ordered]@{name='emi-26.1.2.jar';path=$localSource;version='1.1.26-SNAPSHOT-SNAPSHOT+26.1.2+neoforge';url=$null;sha256=$expected;role='local viewer (no download)'}
+    }
     $pin = $viewerPins["$Generation/$Mode"]
     $source = Join-Path $viewerCache $pin.name
     if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {

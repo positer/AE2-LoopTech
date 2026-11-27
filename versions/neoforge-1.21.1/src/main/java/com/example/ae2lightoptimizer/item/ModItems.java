@@ -29,6 +29,9 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> LOOP_CONDENSER = ITEMS.register(
             "loop_condenser", () -> new BlockItem(ModBlocks.LOOP_CONDENSER.get(), new Item.Properties()));
 
+    public static final DeferredItem<BlockItem> WORLD_SIMULATOR =
+            ITEMS.registerSimpleBlockItem("loop_world_simulator", ModBlocks.WORLD_SIMULATOR);
+
     public static final DeferredItem<BlockItem> LOOP_INTEGRATED_CPU =
             ITEMS.register("loop_integrated_cpu",
                     () -> new BlockItem(ModBlocks.LOOP_INTEGRATED_CPU.get(), new Item.Properties()));

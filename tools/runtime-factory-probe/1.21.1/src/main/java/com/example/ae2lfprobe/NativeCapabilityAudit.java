@@ -71,10 +71,31 @@ public final class NativeCapabilityAudit {
    ticks++;
    if(ticks==100){check(terminal.getMainNode().isActive(),"native_terminal_active");terminal.tags.reconcile(List.of("ChemSource","ChemTarget","EnergySource","EnergyTarget"));for(int i=0;i<7;i++)check(terminal.tags.tag(i<3?"ChemSource":i<5?"ChemTarget":i==5?"EnergySource":"EnergyTarget",positions.get(i).asLong(),p->FactoryServer.contains(terminal.factoryGrid(),BlockPos.of(p))),"native_tag_"+i);code(false,false);signal(true);}
    if(ticks==110)signal(false);
-   if(ticks==120){code(false,true);signal(true);}
-   if(ticks==130)signal(false);
-   if(ticks==190){check(jobs().size()==2,"two_independent_native_waiting_jobs");check(oxygen(0,1)==39000&&oxygen(3,4)==oxygenBaseline+1000,"chemical_partial_1000_waits");check(energy(5,Direction.NORTH).getEnergyStored()==energySourceInitial-4096&&energy(6,Direction.NORTH).getEnergyStored()==energyBaseline+4096,"FE_partial_4096_waits");check(chemicalAmount(2)==7000,"hydrogen_exclusion_preserved");check(jobs().getFirst().count("ChemSource","mekanism::chemical!(mekanism:hydrogen)")==39000,"native_HAS_chemical_without_AE_key");check(jobs().getFirst().count("EnergySource","neoforge::fe")==energySourceInitial-4096,"native_HAS_FE_without_AE_key");saveRestore();check(jobs().stream().allMatch(j->j.save().continuation().contains("pendingTransfer")),"native_partial_continuations_saved");}
-   if(ticks==200){long removed=amount(call(handler(4,Direction.NORTH),handlerType,"extractChemical",new Class<?>[]{long.class,actionType},Long.MAX_VALUE,execute));result.put("fixtureHydrogenRemoved",removed);check(removed>0,"released_chemical_target");for(int k=0;k<10000&&energyRemoved<200000;k++){int n=energy(6,Direction.NORTH).extractEnergy((int)(200000-energyRemoved),false);if(n==0)break;energyRemoved+=n;}check(energyRemoved==200000,"released_FE_target");}
+   if(ticks==150){
+    check(jobs().size()==1,"one_unchanged_chemical_waiting_job");
+    check(oxygen(0,1)==39000&&oxygen(3,4)==oxygenBaseline+1000,"chemical_partial_1000_waits");
+    check(chemicalAmount(2)==7000,"hydrogen_exclusion_preserved");
+    check(jobs().getFirst().count("ChemSource","mekanism::chemical!(mekanism:hydrogen)")==39000,"native_HAS_chemical_without_AE_key");
+    saveRestore();check(jobs().getFirst().save().continuation().contains("pendingTransfer"),"chemical_pending_transfer_saved");
+   }
+   if(ticks==160){
+    long removed=amount(call(handler(4,Direction.NORTH),handlerType,"extractChemical",new Class<?>[]{long.class,actionType},Long.MAX_VALUE,execute));
+    result.put("fixtureHydrogenRemoved",removed); check(removed>0,"released_chemical_target");
+   }
+   if(ticks==175){
+    check(jobs().isEmpty()&&oxygen(0,1)==10000&&oxygen(3,4)==oxygenBaseline+30000,"unchanged_chemical_continuation_completes_exactly");
+    code(false,true);
+   }
+   if(ticks==190){
+    check(jobs().size()==1,"one_unchanged_FE_waiting_job");
+    check(energy(5,Direction.NORTH).getEnergyStored()==energySourceInitial-4096&&energy(6,Direction.NORTH).getEnergyStored()==energyBaseline+4096,"FE_partial_4096_waits");
+    check(jobs().getFirst().count("EnergySource","neoforge::fe")==energySourceInitial-4096,"native_HAS_FE_without_AE_key");
+    saveRestore();check(jobs().getFirst().save().continuation().contains("pendingTransfer"),"FE_pending_transfer_saved");
+   }
+   if(ticks==200){
+    for(int k=0;k<10000&&energyRemoved<200000;k++){int n=energy(6,Direction.NORTH).extractEnergy((int)(200000-energyRemoved),false);if(n==0)break;energyRemoved+=n;}
+    check(energyRemoved==200000,"released_FE_target");
+   }
    if(ticks>200&&phase==0&&jobs().isEmpty()) {verifyForward();result.put("blockedRecoveryTicks",ticks);phase=1;}
    if(phase==1&&ticks%40==0){code(round%2==0,false);signal(true);phase=2;}
    if(phase==2&&ticks%40==10){signal(false);phase=3;}

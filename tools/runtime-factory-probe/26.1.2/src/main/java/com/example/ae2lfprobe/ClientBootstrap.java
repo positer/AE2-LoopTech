@@ -82,6 +82,31 @@ public final class ClientBootstrap {
             mc.stop();
             return;
         }
+        // 26 EMI displays the same NeoForge warning screen as in the Simulator audit.
+        // Continue only the explicit native warning-only button; fatal screens have no such action.
+        if (!started && "emi".equals(System.getProperty("ae2lf.probe.viewerMode")) &&
+                mc.getOverlay() == null && mc.screen instanceof net.neoforged.neoforge.client.gui.LoadingErrorScreen warning) {
+            String continueLabel = net.neoforged.fml.i18n.FMLTranslations.parseMessage("fml.button.continue.launch");
+            for (var child : warning.children()) {
+                if (child instanceof net.minecraft.client.gui.components.Button btn &&
+                        btn.active && btn.visible && btn.getMessage().getString().equals(continueLabel)) {
+                    try {
+                        var d = java.nio.file.Path.of(System.getProperty("ae2lf.probe.reportDir"));
+                        java.nio.file.Files.writeString(d.resolve("startup-warning-continuation.txt"),
+                            "Same NeoForge warning screen as the Simulator EMI test; clicked explicit enabled button: "+btn.getMessage().getString());
+                        net.minecraft.client.Screenshot.takeScreenshot(mc.getMainRenderTarget(), image -> {
+                            try(image) {
+                                image.writeToFile(d.resolve("startup-warning-continuation.png"));
+                            } catch(java.io.IOException failure) { throw new RuntimeException(failure); }
+                        });
+                    } catch(java.io.IOException failure) { throw new RuntimeException(failure); }
+                    warning.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                        btn.getX()+8, btn.getY()+8, new net.minecraft.client.input.MouseButtonInfo(0,0)), false);
+                    break;
+                }
+            }
+            return;
+        }
         if (started || !Boolean.getBoolean("ae2lf.probe") || mc.level != null || mc.getOverlay() != null) return;
         if (!(mc.screen instanceof TitleScreen) && !(mc.screen != null &&
                 mc.screen.getClass().getSimpleName().equals("AccessibilityOnboardingScreen"))) return;

@@ -1,6 +1,7 @@
 package com.example.ae2lightoptimizer.block;
 
 import com.example.ae2lightoptimizer.Ae2LightOptimizer;
+import com.example.ae2lightoptimizer.world.WorldSimulatorBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -42,6 +43,9 @@ public final class ModBlockEntities {
             LOOP_INTEGRATED_CPU = BLOCK_ENTITIES.register("loop_integrated_cpu",
                     () -> new BlockEntityType<>(
                             LoopIntegratedCpuBlockEntity::new, ModBlocks.LOOP_INTEGRATED_CPU.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WorldSimulatorBlockEntity>>
+            WORLD_SIMULATOR = BLOCK_ENTITIES.register("loop_world_simulator", () -> new BlockEntityType<>(WorldSimulatorBlockEntity::new, ModBlocks.WORLD_SIMULATOR.get()));
 
     private ModBlockEntities() {
     }

@@ -1,5 +1,10 @@
 # Project Taste
 
+## 世界交互配方与模拟器
+
+- 适配器以服务端当前配方及实际材料数量为准。配方注册类型与 JSON 序列化 ID 分开核对，资源重载后重新索引。
+- 模拟器按输入、保留引发物及两类产物的剩余容量一起确定批量，再执行当刻的库存变更。
+
 - Native text-area content hooks run after the parent applies its scroll transform and viewport scissor. Draw text, selections and caret in content coordinates; subtract the precise native scroll only for visibility tests. Never apply a second scroll offset or recreate a screen-space clip inside the translated pose. Verify scrolling and cursor/click coordinates using native framebuffer evidence, not only top-of-document screenshots.
 
 - Highlight complete source after edits, cache spans and intersect native visible-line ranges; never re-lex soft-wrapped fragments or recolor unrelated screens. Keep Unicode symbol discovery, resource tags and recipe references consistent with supported compiler syntax.

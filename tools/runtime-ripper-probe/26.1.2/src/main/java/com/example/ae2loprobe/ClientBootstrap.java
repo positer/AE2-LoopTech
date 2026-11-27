@@ -28,6 +28,11 @@ public final class ClientBootstrap {
     private static final long SEED = 0xAE210004L;
     private static boolean attempted;
     private static int titleTicks;
+    private static boolean simulatorHelpRequested;
+    private static int simulatorOutputUiStage;
+    private static int simulatorOutputUiMask;
+    private static final WorldSimulatorExteriorCapture simulatorExterior = new WorldSimulatorExteriorCapture();
+    private static int simulatorFinishTicks;
     private static boolean machineChineseApplied;
     private static String pendingScreenshot;
     private static int screenshotDelay;
@@ -52,8 +57,116 @@ public final class ClientBootstrap {
 
     public ClientBootstrap() {
         NeoForge.EVENT_BUS.addListener(ClientBootstrap::onClientTick);
+        if (WorldSimulatorFixture.ENABLED) {
+            NeoForge.EVENT_BUS.addListener(ClientBootstrap::onWorldSimulatorFrame);
+        }
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) -> RipperImportFixture.observe());
         LOG.info("AE2LO client probe bootstrap armed; only a brand-new {} world can be created", WORLD_PREFIX);
+    }
+
+    private static void onWorldSimulatorFrame(net.neoforged.neoforge.client.event.RenderFrameEvent.Post event) {
+        simulatorExterior.onFrame(ClientBootstrap::capture);
+        var minecraft = Minecraft.getInstance();
+        var frame = ProbeState.screenshotRequest;
+        if (minecraft.player == null || minecraft.level == null || minecraft.getOverlay() != null) {
+            return;
+        }
+        var screen = minecraft.screen;
+        boolean main = isSimulatorScreen(screen);
+        boolean sides = main && isSimulatorOverlayOpen(screen);
+        var simulator = main && minecraft.player.containerMenu instanceof com.example.ae2lightoptimizer.world.WorldSimulatorMenu menu
+                ? menu : null;
+        if (simulator != null && !sides && simulator.progress == 0 && simulator.fluidOutput != null
+                && !CAPTURED.contains(WorldSimulatorFixture.EMPTY_FRAME)) {
+            // Capture the genuine empty track on the first eligible frame rather than risk
+            // missing the server's brief startup phase during a slow client join.
+            capture(WorldSimulatorFixture.EMPTY_FRAME);
+            return;
+        }
+        if (frame == null || CAPTURED.contains(frame)) return;
+        if (!frame.equals(pendingScreenshot)) {
+            pendingScreenshot = frame;
+            screenshotDelay = 3;
+        }
+        boolean ready = frame.equals(WorldSimulatorFixture.WORLD_FRAME)
+                ? screen == null && minecraft.level.getBlockState(WorldSimulatorFixture.ORIGIN)
+                        .is(com.example.ae2lightoptimizer.block.ModBlocks.WORLD_SIMULATOR.get())
+                : frame.equals(WorldSimulatorFixture.ACTIVE_ON_FRAME)
+                ? simulator != null && !sides && simulator.activeOutput
+                : frame.equals(WorldSimulatorFixture.HELP_FRAME)
+                ? isSimulatorHelpScreen(screen)
+                : frame.equals(WorldSimulatorFixture.SIDES_FRAME) || frame.equals(WorldSimulatorFixture.HOVER_FRAME)
+                ? sides
+                : simulator != null && !sides && simulator.progress * 4 >= simulator.cycleTicks
+                        && simulator.progress * 4 <= 3 * simulator.cycleTicks && simulator.fluidOutput != null;
+        if (ready && screenshotDelay > 0 && --screenshotDelay == 0) {
+            capture(frame);
+        }
+    }
+
+    private static boolean isSimulatorScreen(Object screen) {
+        return screen != null && screen.getClass().getSimpleName().equals("WorldSimulatorScreen");
+    }
+
+    private static boolean isSimulatorHelpScreen(Object screen) {
+        return screen != null && screen.getClass().getName().equals("guideme.internal.screen.GuideScreen");
+    }
+
+    private static boolean isSimulatorOverlayOpen(Object screen) {
+        return Boolean.TRUE.equals(invokeSimulatorNavigation(screen, "isSideConfigurationOpen"));
+    }
+
+    private static Object invokeSimulatorNavigation(Object screen, String action) {
+        return invokeSimulatorNavigation(screen, action, new Class<?>[0]);
+    }
+
+    private static Object invokeSimulatorNavigation(Object screen, String action, Class<?>[] signature, Object... args) {
+        try {
+            var method = screen.getClass().getDeclaredMethod(action, signature);
+            if (!method.trySetAccessible()) throw new IllegalAccessException(action);
+            return method.invoke(screen, args);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Cannot run simulator UI probe: " + action, e);
+        }
+    }
+
+    private static net.minecraft.client.renderer.Rect2i simulatorFaceBounds(Object screen, appeng.api.orientation.RelativeSide face) {
+        return (net.minecraft.client.renderer.Rect2i) invokeSimulatorNavigation(screen, "faceButtonBounds",
+                new Class<?>[]{appeng.api.orientation.RelativeSide.class}, face);
+    }
+
+    private static void checkSimulatorFaceLayout(Object screen) {
+        var faces = appeng.api.orientation.RelativeSide.values();
+        var bounds = new java.util.EnumMap<appeng.api.orientation.RelativeSide, net.minecraft.client.renderer.Rect2i>(
+                appeng.api.orientation.RelativeSide.class);
+        for (var face : faces) bounds.put(face, simulatorFaceBounds(screen, face));
+        var top = bounds.get(appeng.api.orientation.RelativeSide.TOP);
+        var left = bounds.get(appeng.api.orientation.RelativeSide.LEFT);
+        var bottom = bounds.get(appeng.api.orientation.RelativeSide.BOTTOM);
+        var right = bounds.get(appeng.api.orientation.RelativeSide.RIGHT);
+        var front = bounds.get(appeng.api.orientation.RelativeSide.FRONT);
+        var back = bounds.get(appeng.api.orientation.RelativeSide.BACK);
+        if (bounds.values().stream().anyMatch(b -> b.getWidth() <= 0 || b.getWidth() != b.getHeight() || b.getWidth() != top.getWidth())
+                || !(left.getX() < top.getX() && right.getX() > top.getX()
+                && top.getX() == bottom.getX() && top.getX() == front.getX() && right.getX() == back.getX()
+                && top.getY() < bottom.getY() && left.getY() == bottom.getY() && right.getY() == bottom.getY()
+                && front.getY() == back.getY() && front.getY() > bottom.getY())) {
+            throw new AssertionError("Simulator face layout does not match the reference");
+        }
+        LOG.info("AE2LO simulator native six-face placement matches the reference: {}", bounds);
+    }
+
+    private static void simulatorPointer(Minecraft minecraft, double guiX, double guiY) {
+        try {
+            var window = minecraft.getWindow();
+            var move = net.minecraft.client.MouseHandler.class.getDeclaredMethod("onMove", long.class, double.class, double.class);
+            if (!move.trySetAccessible()) throw new IllegalAccessException("onMove");
+            move.invoke(minecraft.mouseHandler, window.handle(),
+                    guiX * window.getScreenWidth() / window.getGuiScaledWidth(),
+                    guiY * window.getScreenHeight() / window.getGuiScaledHeight());
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Cannot position the native client pointer for simulator hover evidence", e);
+        }
     }
 
     private static void onClientTick(ClientTickEvent.Post event) {
@@ -67,6 +180,21 @@ public final class ClientBootstrap {
             minecraft.reloadResourcePacks(); titleTicks = 0;
             return;
         }
+        if (WorldSimulatorFixture.ENABLED && minecraft.getOverlay() == null
+                && minecraft.screen instanceof net.neoforged.neoforge.client.gui.LoadingErrorScreen warning) {
+            String proceed = net.neoforged.fml.i18n.FMLTranslations.parseMessage("fml.button.continue.launch");
+            for (var child : warning.children()) {
+                if (child instanceof net.minecraft.client.gui.components.Button button
+                        && button.getMessage().getString().equals(proceed)) {
+                    LOG.info("World simulator fixture acknowledging the NeoForge warning-only startup screen");
+                    warning.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                            button.getX() + 8, button.getY() + 8,
+                            new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
+                    break;
+                }
+            }
+            return;
+        }
         if (!attempted && Boolean.getBoolean("ae2lo.probe")
                 && minecraft.level == null && minecraft.getSingleplayerServer() == null
                 && minecraft.getOverlay() == null && (minecraft.screen instanceof TitleScreen
@@ -78,6 +206,90 @@ public final class ClientBootstrap {
         }
         if (minecraft.level == null || minecraft.player == null || minecraft.getSingleplayerServer() == null) return;
         if (!minecraft.getSingleplayerServer().getWorldData().getLevelName().startsWith(WORLD_PREFIX)) return;
+
+        if (WorldSimulatorFixture.ENABLED) {
+            var screen = minecraft.screen;
+            if (isSimulatorScreen(screen)) {
+                boolean open = isSimulatorOverlayOpen(screen);
+                if (CAPTURED.contains(WorldSimulatorFixture.MENU_FRAME)
+                        && !CAPTURED.contains(WorldSimulatorFixture.SIDES_FRAME) && !open) {
+                    invokeSimulatorNavigation(screen, "openSideConfiguration");
+                    checkSimulatorFaceLayout(screen);
+                    simulatorPointer(minecraft, 2, 2);
+                    ProbeState.screenshotRequest = WorldSimulatorFixture.SIDES_FRAME;
+                } else if (open && CAPTURED.contains(WorldSimulatorFixture.SIDES_FRAME)
+                        && !CAPTURED.contains(WorldSimulatorFixture.HOVER_FRAME)
+                        && !WorldSimulatorFixture.HOVER_FRAME.equals(ProbeState.screenshotRequest)) {
+                    var back = simulatorFaceBounds(screen, appeng.api.orientation.RelativeSide.BACK);
+                    simulatorPointer(minecraft, back.getX() + back.getWidth() / 2.0, back.getY() + 3);
+                    ProbeState.screenshotRequest = WorldSimulatorFixture.HOVER_FRAME;
+                } else if (open && CAPTURED.contains(WorldSimulatorFixture.HOVER_FRAME)) {
+                    invokeSimulatorNavigation(screen, "backToSimulator");
+                }
+                if (CAPTURED.contains(WorldSimulatorFixture.HOVER_FRAME)
+                        && screen instanceof appeng.client.gui.AEBaseScreen<?> gui
+                        && minecraft.player.containerMenu instanceof com.example.ae2lightoptimizer.world.WorldSimulatorMenu simulator) {
+                    int x = gui.getGuiLeft() - 9;
+                    if (simulatorOutputUiStage == 0) {
+                        if (simulator.activeOutput) throw new AssertionError("New simulator unexpectedly starts with output on");
+                        simulatorOutputUiMask = simulator.exportFaces;
+                        int y = gui.getGuiTop() + 34;
+                        if (!screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                            x, y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false)) throw new AssertionError("Active output control did not receive first native click");
+                        simulatorPointer(minecraft, 2, 2);
+                        simulatorOutputUiStage = 1;
+                        ProbeState.screenshotRequest = WorldSimulatorFixture.ACTIVE_ON_FRAME;
+                    } else if (simulatorOutputUiStage == 1 && simulator.activeOutput
+                            && CAPTURED.contains(WorldSimulatorFixture.ACTIVE_ON_FRAME)) {
+                        if (simulator.exportFaces != simulatorOutputUiMask) throw new AssertionError("Switch altered active face mask");
+                        int y = gui.getGuiTop() + 34;
+                        if (!screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                            x, y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false)) throw new AssertionError("Active output control did not receive second native click");
+                        simulatorOutputUiStage = 2;
+                    } else if (simulatorOutputUiStage == 2 && !simulator.activeOutput && !simulatorHelpRequested) {
+                        if (simulator.exportFaces != simulatorOutputUiMask) throw new AssertionError("Switch altered active face mask");
+                        LOG.info("AE2LO native output toolbar: off -> on -> off, face mask unchanged");
+                        simulatorHelpRequested = true;
+                        int y = gui.getGuiTop() + 12;
+                        simulatorPointer(minecraft, x, y);
+                        if (!screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                            x, y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false)) throw new AssertionError("First simulator toolbar button did not accept the help click");
+                        ProbeState.screenshotRequest = WorldSimulatorFixture.HELP_FRAME;
+                    }
+                }
+            } else if (isSimulatorHelpScreen(screen) && CAPTURED.contains(WorldSimulatorFixture.HELP_FRAME)) {
+                screen.onClose();
+            }
+            if (ProbeState.finished) {
+                boolean expired = ++simulatorFinishTicks > 340;
+                boolean uiCaptured = CAPTURED.contains(WorldSimulatorFixture.MENU_FRAME)
+                        && CAPTURED.contains(WorldSimulatorFixture.EMPTY_FRAME)
+                        && CAPTURED.contains(WorldSimulatorFixture.SIDES_FRAME)
+                        && CAPTURED.contains(WorldSimulatorFixture.HOVER_FRAME)
+                        && CAPTURED.contains(WorldSimulatorFixture.HELP_FRAME)
+                        && CAPTURED.contains(WorldSimulatorFixture.ACTIVE_ON_FRAME);
+                if (uiCaptured && !CAPTURED.contains(WorldSimulatorFixture.WORLD_FRAME)) {
+                    if (minecraft.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>) {
+                        minecraft.player.closeContainer();
+                    }
+                    minecraft.player.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES,
+                            net.minecraft.world.phys.Vec3.atCenterOf(WorldSimulatorFixture.ORIGIN));
+                    ProbeState.screenshotRequest = WorldSimulatorFixture.WORLD_FRAME;
+                }
+                boolean exteriorReady = false;
+                if (uiCaptured && CAPTURED.contains(WorldSimulatorFixture.WORLD_FRAME)) {
+                    if (minecraft.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>) {
+                        minecraft.player.closeContainer();
+                    }
+                    exteriorReady = simulatorExterior.tick(CAPTURED, ClientBootstrap::capture);
+                }
+                boolean viewersReady = WorldSimulatorViewerAudit.check(evidenceDirectory(minecraft), expired);
+                if (viewersReady && (exteriorReady || expired)) {
+                    advanceNormalShutdown(minecraft);
+                }
+            }
+            return;
+        }
 
         if (IntegratedCpuFixture.ENABLED) {
             var frame = ProbeState.screenshotRequest;

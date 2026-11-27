@@ -25,6 +25,8 @@ public final class Ae2LightOptimizerClient {
     private static final Map<String, ResourceLocation> LOOP_STORAGE_DRIVE_MODELS = createDriveModels();
 
     private static void registerScreens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
+        appeng.init.client.InitScreens.register(event, com.example.ae2lightoptimizer.world.WorldSimulatorMenu.TYPE.get(),
+                WorldSimulatorScreen::new, "/screens/ae2lpt_loop_world_simulator.json");
         appeng.init.client.InitScreens.register(event,
                 com.example.ae2lightoptimizer.menu.LoopIntegratedCpuMenu.TYPE.get(),
                 LoopIntegratedCpuScreen::new, "/screens/ae2lpt_loop_integrated_cpu.json");

@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ICI",
+    "PSA",
+    "IWI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "ae2lpt:loop_crystal"
+    },
+    "P": {
+      "item": "ae2:formation_plane"
+    },
+    "S": {
+      "item": "ae2lpt:4k_loop_storage_core"
+    },
+    "A": {
+      "item": "ae2:annihilation_plane"
+    },
+    "W": {
+      "item": "ae2:cell_workbench"
+    }
+  },
+  "result": {
+    "id": "ae2lpt:loop_world_simulator",
+    "count": 1
+  }
+}

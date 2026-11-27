@@ -1,0 +1,7 @@
+{
+  "parent": "ae2lpt:block/loop_world_simulator",
+  "textures": {
+    "display": "ae2lpt:block/loop_world_simulator/display_on",
+    "control": "ae2lpt:block/loop_world_simulator/control_on"
+  }
+}

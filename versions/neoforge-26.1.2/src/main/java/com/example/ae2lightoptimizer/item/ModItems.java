@@ -28,6 +28,9 @@ public final class ModItems {
                     "supercomputing_crafting_optimizer_interface",
                     ModBlocks.SUPERCOMPUTING_CRAFTING_OPTIMIZER_INTERFACE);
 
+    public static final DeferredItem<BlockItem> WORLD_SIMULATOR =
+            ITEMS.registerSimpleBlockItem("loop_world_simulator", ModBlocks.WORLD_SIMULATOR);
+
     public static final DeferredItem<BlockItem> LOOP_INTEGRATED_CPU =
             ITEMS.registerSimpleBlockItem("loop_integrated_cpu", ModBlocks.LOOP_INTEGRATED_CPU);
 

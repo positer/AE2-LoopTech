@@ -1,14 +1,22 @@
 param(
     [Parameter(Mandatory=$true)][ValidateSet('1.21.1','26.1.2')][string]$Generation,
-    [Parameter(Mandatory=$true)][ValidateSet('omni','omni_access','ae2lt_capacity','factory_wireless','template','channel_capacity','smithing','layered','core256m','catalog_audit','native_catalog','exact_components','pack_catalog','tool_components','loop_condenser','loop_ticker','machine_audit','omni_memory_card','loop_ticker_part','integrated_cpu')][string]$Chain,
+    [Parameter(Mandatory=$true)][ValidateSet('omni','omni_access','ae2lt_capacity','factory_wireless','template','channel_capacity','smithing','layered','core256m','catalog_audit','native_catalog','exact_components','pack_catalog','tool_components','loop_condenser','loop_ticker','machine_audit','omni_memory_card','loop_ticker_part','integrated_cpu','world_simulator')][string]$Chain,
     [Parameter(Mandatory=$true)][ValidatePattern('^ripper-[A-Za-z0-9_.-]+$')][string]$EvidenceName,
     [string]$EvidenceRoot,
     [string[]]$AdditionalMods = @(),
+    [string]$GradleInitScript,
     [switch]$PrepareOnly,
     [switch]$ValidateExisting,
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9_.-]*$')][string]$ValidationName
 )
 $ErrorActionPreference = 'Stop'
+$runtimeArguments = @('--offline','--no-daemon')
+if ($GradleInitScript) {
+    $init = Get-Item -LiteralPath $GradleInitScript
+    if ($init.PSIsContainer -or $init.Extension -ne '.gradle') { throw 'Expected a Gradle init script file' }
+    $runtimeArguments += @('-I', $init.FullName)
+}
+$runtimeArguments += 'runClient'
 # Older weak single-machine fixtures are superseded by the complete paired native acceptance gate.
 if ($Chain -in @('loop_condenser','loop_ticker')) { $Chain = 'machine_audit' }
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
@@ -99,10 +107,10 @@ function Assert-RuntimeMatchesProduction {
 function Assert-GameplayEvidence([string]$world) {
     $report = Read-PassingFixture 'report.json'
     if ($report.minecraft -ne $Generation -or $report.world -ne $world) { throw 'Report generation/world is not this run' }
-    $chainNames = @{omni='omni_connector';omni_access='omni_access';ae2lt_capacity='ae2lt_capacity';factory_wireless='factory_wireless';channel_capacity='channel_capacity';template='template_growth';smithing='template_growth_then_netherite_pickaxe_smithing';layered='logs_planks_sticks_tool_and_template_growth_then_smithing';core256m='all_ten_core_tiers_crystal_growth_and_netherite_ingots';native_catalog='native_catalog_map_extension';exact_components='exact_components';catalog_audit='catalog_audit';pack_catalog='pack_catalog';loop_condenser='loop_condenser';loop_ticker='loop_ticker';machine_audit='machine_audit';omni_memory_card='omni_memory_card';loop_ticker_part='loop_ticker_part';integrated_cpu='integrated_cpu';tool_components='tool_components'}
+    $chainNames = @{omni='omni_connector';omni_access='omni_access';ae2lt_capacity='ae2lt_capacity';factory_wireless='factory_wireless';channel_capacity='channel_capacity';template='template_growth';smithing='template_growth_then_netherite_pickaxe_smithing';layered='logs_planks_sticks_tool_and_template_growth_then_smithing';core256m='all_ten_core_tiers_crystal_growth_and_netherite_ingots';native_catalog='native_catalog_map_extension';exact_components='exact_components';catalog_audit='catalog_audit';pack_catalog='pack_catalog';loop_condenser='loop_condenser';loop_ticker='loop_ticker';machine_audit='machine_audit';omni_memory_card='omni_memory_card';loop_ticker_part='loop_ticker_part';integrated_cpu='integrated_cpu';world_simulator='world_simulator';tool_components='tool_components'}
     if ($report.chain -ne $chainNames[$Chain]) { throw 'The requested chain is not the completed fixture' }
     # 0.0.6 removed the ripper's own idle drain; older evidence keeps its recorded 5 AE/t.
-    if ($Chain -notin @('omni','omni_access','ae2lt_capacity','factory_wireless','machine_audit','loop_ticker_part','integrated_cpu') -and $report.ripperConfiguredIdleAEPerTick -ne 0) { throw 'Ripper idle drain is not zero' }
+    if ($Chain -notin @('omni','omni_access','ae2lt_capacity','factory_wireless','machine_audit','loop_ticker_part','integrated_cpu','world_simulator') -and $report.ripperConfiguredIdleAEPerTick -ne 0) { throw 'Ripper idle drain is not zero' }
     if ($Chain -eq 'omni_access' -and $report.ripperIdlePower -ne 0) { throw 'Ripper idle drain is no longer zero' }
     if ($Chain -eq 'omni') {
         foreach ($check in @('four_loaded_endpoints','one_star_hub','connected_without_power','connectors_require_no_channels',
@@ -269,7 +277,8 @@ function Assert-GameplayEvidence([string]$world) {
             throw 'Integrated CPU capacity, native crafting, or induction power evidence failed'
         }
     }
-    $requiredFrames = if ($Chain -eq 'integrated_cpu') {
+    $requiredFrames = if ($Chain -eq 'world_simulator') { @('ae2lo-ripper-world-simulator-block.png','ae2lo-ripper-world-simulator-menu.png','ae2lo-ripper-world-simulator-progress-empty.png','ae2lo-ripper-world-simulator-sides.png','ae2lo-ripper-world-simulator-sides-hover.png','ae2lo-ripper-world-simulator-help.png','ae2lo-ripper-world-simulator-active-output-on.png','ae2lo-ripper-exterior-front.png','ae2lo-ripper-exterior-right.png','ae2lo-ripper-exterior-back.png','ae2lo-ripper-exterior-left.png','ae2lo-ripper-exterior-top.png','ae2lo-ripper-exterior-bottom.png','ae2lo-ripper-exterior-front-active.png','ae2lo-ripper-exterior-top-active.png','ae2lo-ripper-exterior-oblique.png','ae2lo-ripper-exterior-oblique-active.png') }
+        elseif ($Chain -eq 'integrated_cpu') {
         @('ae2lo-ripper-integrated-cpu-world.png','ae2lo-ripper-integrated-cpu-menu.png',
           'ae2lo-ripper-integrated-cpu-reference-drive.png','ae2lo-ripper-integrated-cpu-ticker-menu.png')
     } elseif ($Chain -eq 'machine_audit') { @('ae2lo-ripper-machine-ticker-ui.png','ae2lo-ripper-machine-condenser-ui.png') }
@@ -387,9 +396,11 @@ try {
     $summary['productionSha256'] = $productionHash
     $summary['helperSha256'] = $helperHash
 
-    # Only conflicting test helpers are staged out. Every existing mod and .bak stays in its own instance.
+    # World simulator compatibility runs use only the explicitly requested optional mods.
+    # The checked backup/restore path also covers the pre-existing runtime JARs.
     $conflicts = @(Get-ChildItem -LiteralPath $runMods -File | Where-Object {
-        $_.Name -match '^ae2l[fo]-runtime-probe-.*\.jar$'
+        $_.Name -match '^ae2l[fo]-runtime-probe-.*\.jar$' -or
+            ($Chain -eq 'world_simulator' -and $_.Extension -eq '.jar')
     })
     foreach ($conflict in $conflicts) {
         $saved = Join-Path $backup $conflict.Name
@@ -417,14 +428,14 @@ try {
     $env:JAVA_TOOL_OPTIONS = '"-javaagent:' + $agent.Replace('\','/') + '" -Dae2lf.probe=false -Dae2lo.probe=true -Dae2lo.probe.background=true -Dae2lo.probe.autoExit=true' +
         ' -Dae2lo.probe.chain=' + $Chain + ' -Dae2lo.probe.world=' + $world + $orderArg +
         ' "-Dae2lo.probe.reportDir=' + $evidence.Replace('\','/') + '"'
-    Write-EvidenceJson 'launch.json' ([ordered]@{generation=$Generation;chain=$Chain;world=$world;javaToolOptions=$env:JAVA_TOOL_OPTIONS;launcher=(Join-Path $taskRoot "build-$Generation.ps1");arguments=@('--offline','--no-daemon','runClient');usesPcl=$false})
+    Write-EvidenceJson 'launch.json' ([ordered]@{generation=$Generation;chain=$Chain;world=$world;javaToolOptions=$env:JAVA_TOOL_OPTIONS;launcher=(Join-Path $taskRoot "build-$Generation.ps1");arguments=$runtimeArguments;usesPcl=$false})
     Write-EvidenceJson 'background-summary.json' $summary
     Write-Output "$Generation ${Chain}: launching a hidden native client in $world"
     # Execute inside the caller's existing console; do not create a visible PowerShell window.
     # JAVA_TOOL_OPTIONS is informational stderr in Windows PowerShell. Inspect native exit and reports.
     try {
         $ErrorActionPreference = 'Continue'
-        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $taskRoot "build-$Generation.ps1") --offline --no-daemon runClient *> (Join-Path $evidence 'client.log')
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $taskRoot "build-$Generation.ps1") @runtimeArguments *> (Join-Path $evidence 'client.log')
         $nativeExit = $LASTEXITCODE
     } finally { $ErrorActionPreference = 'Stop' }
     $summary['exitCode'] = $nativeExit

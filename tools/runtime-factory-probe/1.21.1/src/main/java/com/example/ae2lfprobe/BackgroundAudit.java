@@ -377,6 +377,11 @@ public final class BackgroundAudit {
             owner.tags.tag("A",new BlockPos(0,101,-1).asLong(),v->true);
             owner.tags.tag("B",new BlockPos(0,101,-1).asLong(),v->true);
             owner.tags.tag("B",new BlockPos(1,101,-1).asLong(),v->true);
+            p.serverLevel().setBlockAndUpdate(new BlockPos(2,101,-2),FactoryContent.CABLE.get().defaultBlockState());
+            p.serverLevel().setBlockAndUpdate(new BlockPos(2,101,-1),net.minecraft.world.level.block.Blocks.BARREL.defaultBlockState());
+            p.serverLevel().setBlockAndUpdate(new BlockPos(0,99,-1),net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState());
+            owner.tags.tag("B",new BlockPos(2,101,-1).asLong(),v->true);
+            owner.tags.tag("B",new BlockPos(0,99,-1).asLong(),v->true);
             p.connection.teleport(1,102,2,180,20);FactoryEncoderItem.refresh(p,stack);
             var view=stack.getOrDefault(FactoryEncoderView.TYPE.get(),FactoryEncoderView.EMPTY);
             stack.set(FactoryEncoderView.TYPE.get(),new FactoryEncoderView(view.tags(),"A",view.selectedPositions(),
@@ -393,7 +398,7 @@ public final class BackgroundAudit {
         add("ui-encoder-tag-highlights",()->{
             cameraX=1;cameraY=102;cameraZ=2;cameraYaw=180;cameraPitch=20;
             net.neoforged.neoforge.network.PacketDistributor.sendToServer(new FactoryEncoderAction(0,new BlockPos(0,101,-1),true,true,false));
-        },"world",()->mc.player.getMainHandItem().getOrDefault(FactoryEncoderView.TYPE.get(),FactoryEncoderView.EMPTY).selectedPositions().size()==2);
+        },"world",()->mc.player.getMainHandItem().getOrDefault(FactoryEncoderView.TYPE.get(),FactoryEncoderView.EMPTY).selectedPositions().containsAll(java.util.List.of(new BlockPos(0,101,-1).asLong(), new BlockPos(1,101,-1).asLong(), new BlockPos(2,101,-1).asLong(), new BlockPos(0,99,-1).asLong())));
         add("ui-encoder-machine-tags",()->{}, "world",()->{
             var view=mc.player.getMainHandItem().getOrDefault(FactoryEncoderView.TYPE.get(),FactoryEncoderView.EMPTY);
             return view.machineTags().stream().anyMatch(machine->machine.position()==new BlockPos(0,101,-1).asLong()
@@ -402,15 +407,15 @@ public final class BackgroundAudit {
         add("ui-encoder-remove-one",()->net.neoforged.neoforge.network.PacketDistributor.sendToServer(
             new FactoryEncoderAction(0,new BlockPos(0,101,-1),true,false,false,true)), "world",()->{
             var view=mc.player.getMainHandItem().getOrDefault(FactoryEncoderView.TYPE.get(),FactoryEncoderView.EMPTY);
-            boolean ok=view.selectedPositions().size()==1 && view.machineTags().stream().anyMatch(machine->
-                machine.position()==new BlockPos(0,101,-1).asLong() && !machine.tags().contains("B"));
+            boolean ok=new java.util.HashSet<>(view.selectedPositions()).equals(java.util.Set.of(new BlockPos(1,101,-1).asLong(), new BlockPos(2,101,-1).asLong(), new BlockPos(0,99,-1).asLong())) && view.machineTags().stream().anyMatch(machine->
+                machine.position()==new BlockPos(0,101,-1).asLong() && machine.tags().contains("A") && !machine.tags().contains("B"));
             if(!ok)throw new IllegalStateException("remove-one selected="+view.selected()+" positions="+view.selectedPositions()+" machines="+view.machineTags());
             return true;
         });
         add("ui-encoder-remove-bulk",()->net.neoforged.neoforge.network.PacketDistributor.sendToServer(
             new FactoryEncoderAction(0,new BlockPos(1,101,-1),true,true,false,true)), "world",()->{
             var view=mc.player.getMainHandItem().getOrDefault(FactoryEncoderView.TYPE.get(),FactoryEncoderView.EMPTY);
-            boolean ok=view.selectedPositions().isEmpty() && view.machineTags().stream().noneMatch(machine->machine.tags().contains("B"));
+            boolean ok=new java.util.HashSet<>(view.selectedPositions()).equals(java.util.Set.of(new BlockPos(0,99,-1).asLong())) && view.machineTags().stream().filter(machine->machine.tags().contains("B")).map(machine->machine.position()).collect(java.util.stream.Collectors.toSet()).equals(java.util.Set.of(new BlockPos(0,99,-1).asLong()));
             if(!ok)throw new IllegalStateException("remove-bulk selected="+view.selected()+" positions="+view.selectedPositions()+" machines="+view.machineTags());
             return true;
         });
@@ -579,6 +584,7 @@ public final class BackgroundAudit {
         if(Boolean.getBoolean("ae2lf.probe.parserOnly"))steps.removeIf(step->!step.id.startsWith("ui-debug-")&&!java.util.Set.of("ui-factory-panel-recipe","ui-factory-panel-encoded","ui-factory-panel-code","ui-factory-panel-code-saved").contains(step.id));
         if(Boolean.getBoolean("ae2lf.probe.addonCompat"))steps.removeIf(step->!java.util.Set.of("compatibility-registry","addon-soul-capability").contains(step.id));
         if(Boolean.getBoolean("ae2lf.probe.dispatchOnly"))steps.removeIf(step->!step.id.equals("complex-factory-flows"));
+        if(Boolean.getBoolean("ae2lf.probe.terminalOnly"))steps.removeIf(step->!step.id.equals("terminal-runtime-sfm"));
         if(Boolean.getBoolean("ae2lf.probe.hugeOnly"))steps.removeIf(step->!step.id.equals("huge-quantity-logistics"));
         if(Boolean.getBoolean("ae2lf.probe.recoveryOnly"))steps.removeIf(step->!step.id.equals("huge-recovery-logistics"));
         if(Boolean.getBoolean("ae2lf.probe.chunkOnly"))steps.removeIf(step->!step.id.equals("chunk-lifecycle-logistics"));

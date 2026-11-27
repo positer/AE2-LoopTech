@@ -141,11 +141,13 @@ public final class ComplexFlowAudit {
                 check(jobs(terminals[0]).isEmpty()&&count(0,0,Items.IRON_INGOT)==40&&count(0,3,Items.IRON_INGOT)==64&&count(0,0,Items.GOLD_INGOT)==5,"ordinary_partial_finishes_and_exclusion_preserves_gold");
                 check(jobs(terminals[1]).size()==1&&count(1,0,Items.IRON_INGOT)==40&&count(1,3,Items.IRON_INGOT)==64,"restored_get_must_does_not_advance_after_24");
             }
-            if(ticks==125)install(1,"import Input,Output\nget must 1 minecraft:gold_ingot from Input\nput minecraft:gold_ingot into Output\ndone");
-            if(ticks==126)signal(1,true);if(ticks==128)signal(1,false);
-            if(ticks==140)check(count(1,3,Items.GOLD_INGOT)==64&&jobs(terminals[1]).size()==1,"later_gold_run_finishes_while_iron_must_waits");
+            if(ticks==140)check(count(1,3,Items.GOLD_INGOT)==63&&jobs(terminals[1]).size()==1,"unchanged_program_keeps_waiting_without_entering_other_route");
             if(ticks==200)barrels[1][3].setItem(1,ItemStack.EMPTY);
             if(ticks==210)check(jobs(terminals[1]).isEmpty()&&count(1,0,Items.IRON_INGOT)==0&&count(1,3,Items.IRON_INGOT)==104,"restored_must_completes_only_remaining_40");
+            if(ticks==220)install(1,"import Input,Output\nget must 1 minecraft:gold_ingot from Input\nput minecraft:gold_ingot into Output\ndone");
+            if(ticks==240)check(jobs(terminals[1]).isEmpty()&&count(1,0,Items.GOLD_INGOT)==0
+                    &&count(1,3,Items.GOLD_INGOT)==64&&count(1,3,Items.IRON_INGOT)==104,
+                    "replacement_starts_gold_once_without_replaying_completed_iron");
             if(ticks>=110&&ticks<174)signal(5,ticks%2==0);
             if(ticks==174)signal(5,false);
             maxTerminalJobs=Math.max(maxTerminalJobs,jobs(terminals[5]).size());
@@ -158,7 +160,7 @@ public final class ComplexFlowAudit {
                 check(count(2,3,Items.IRON_INGOT)==192&&count(2,2,Items.IRON_INGOT)==0&&jobs(terminals[2]).size()==1&&pulseTicks>=128,"continuous_nested_pipeline_resumes_after_late_refill");
                 check(count(3,3,Items.IRON_INGOT)==96&&jobs(terminals[3]).isEmpty(),"finite_nested_forward_function_finishes_96");
                 check(count(4,3,Items.IRON_INGOT)==64&&count(4,3,Items.GOLD_INGOT)==8,"sfm_two_trigger_program_timer_and_edges_are_exact");
-                check(count(5,3,Items.IRON_INGOT)==32&&count(5,0,Items.IRON_INGOT)==32&&jobs(terminals[5]).isEmpty()&&maxTerminalJobs>=8,"32_native_redstone_runs_keep_independent_continuations");
+                check(count(5,3,Items.IRON_INGOT)==1&&count(5,0,Items.IRON_INGOT)==63&&jobs(terminals[5]).isEmpty()&&maxTerminalJobs==1,"rapid_native_edges_replace_waiting_execution_and_only_last_run_delivers");
                 terminalsChecked=true;
             }
             runOrders();

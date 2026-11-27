@@ -6,6 +6,14 @@ AE2 LoopTech（应用能源：循环科技，AE2LT）的双语项目主页位于
 
 两代 `integration/LoopTickerTarget.java` 执行朝向目标的追加 tick。部件通过 AE2 网格调度，方块通过现有服务器 tick 服务调用。六向方块模型、物品模型和工作台贴图由 `tools/verify_loop_machine_assets.py` 对照同代 AE2 校验。
 
+## 2026-11-27 循环世界合成模拟器 0.1.4
+
+- 两代 `world/WorldSimulatorBlock.java`、`WorldSimulatorBlockEntity.java`、`WorldSimulatorMenu.java` 与 `client/WorldSimulatorScreen.java` 分别管理方块朝向、库存与结算、菜单同步及界面。两代使用各自的 NeoForge 传输 API。该机器不注册 ME 网格节点、不需供电，保留独立服务器结算与六面管道被动端口；主动搬运仅按全局开关和输出面向邻接设备推送两类产物。界面继承 AE2 分子装配室样式并接入实际流体材质、左侧输出设置和右侧四升级槽。
+- `WorldRecipeCatalog.java` 从服务端已加载配方适配 AE2 转化、JDT 流体转换及闪电科技雷劈。它也负责过载 TNT 的专用结果初始化。`WorldSimulatorContent.java` 注册服务端黑白名单、自动导入和两种端口能力。
+- `client/WorldSimulatorRecipeViews.java`、`WorldSimulatorJeiPlugin.java`、`WorldSimulatorEmiPlugin.java` 共用服务端配方适配器，通过 JEI 与 EMI 展示导入配方。
+- `shared/…/world/BatchAllocation.java` 计算可结算份数和各输入格的实际扣量，支持交叉匹配的原料以及保留的避雷针。资源入口是 `loop_world_simulator`，玩法与配置见 `docs/world-simulator.md`。
+- `tools/runtime-ripper-probe/<generation>/…/WorldSimulatorFixture.java` 以已加载的原生配方和真实方块测试五类合成。复现入口为 `verify-background.ps1 -Chain world_simulator`。
+
 ## 2026-11-26 循环进刻器 0.1.3
 
 - 两代 `integration/LoopTickerPower.java` 从 ME 网络为相邻机器供电。共享 `LoopTickerEnergyTransfer.java` 负责整 FE 换算、实际扣款、退款和逐刻去重。

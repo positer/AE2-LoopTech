@@ -18,6 +18,7 @@ public final class TerminalAudit {
     private static ServerLevel level;private static FactoryBlockEntity terminal;
     private static BarrelBlockEntity a,b;private static int ticks;
     private static FactoryBlockEntity dropProvider;
+    private static int installBaseline,pulseBaseline,timerBaseline,heldBaseline,nativeRises;
     private static final BlockPos POS=new BlockPos(168,100,40);
     private static final Map<String,Object> evidence=new LinkedHashMap<>();
     public static void start(ServerLevel world) {
@@ -55,29 +56,54 @@ public final class TerminalAudit {
                 check(terminal.executionError().contains("recursion exceeds 64"),"runaway_recursion_reports_error_without_crash");
                 level.setBlockAndUpdate(POS.north(),Blocks.AIR.defaultBlockState());
             }
-            if(ticks==120)install("import A,B\nget 1 minecraft:iron_ingot from A\nput minecraft:iron_ingot into B\ndone");
-            if(ticks>=130&&ticks<150)level.setBlockAndUpdate(POS.north(),ticks%2==0?Blocks.REDSTONE_BLOCK.defaultBlockState():Blocks.AIR.defaultBlockState());
+            if(ticks==120) {
+                installBaseline=b.getItem(0).getCount();
+                install("import A,B\nget 1 minecraft:iron_ingot from A\nput minecraft:iron_ingot into B\ndone");
+            }
+            if(ticks==129) {
+                pulseBaseline=b.getItem(0).getCount();
+                evidence.put("implicit_install_delivery",pulseBaseline-installBaseline);
+                check(pulseBaseline-installBaseline==1,"replacement_pattern_runs_once_before_edges");
+            }
+            if(ticks>=130&&ticks<150) {
+                boolean powered=(ticks%2)==0;
+                if(!powered) check(b.getItem(0).getCount()==pulseBaseline+nativeRises,"pulse_"+nativeRises+"_delivered_once_before_fall");
+                level.setBlockAndUpdate(POS.north(),powered?Blocks.REDSTONE_BLOCK.defaultBlockState():Blocks.AIR.defaultBlockState());
+                if(powered) nativeRises++;
+            }
             if(ticks==160) {
-                check(b.getItem(0).getCount()==10,"ten_pulses_execute_after_failed_job");
+                timerBaseline=b.getItem(0).getCount();
+                check(nativeRises==10 && timerBaseline-pulseBaseline==nativeRises,"ten_pulses_execute_after_failed_job");
                 install("EVERY 2 TICKS DO INPUT 1 iron_ingot FROM A OUTPUT TO B END");
             }
             if(ticks==200) {
-                check(b.getItem(0).getCount()==30,"sfm_timer_runs_twenty_times_without_redstone");
+                heldBaseline=b.getItem(0).getCount();
+                check(heldBaseline-timerBaseline==20,"sfm_timer_runs_twenty_times_without_redstone");
                 install("EVERY REDSTONE PULSE DO INPUT 1 iron_ingot FROM A OUTPUT TO B END");
             }
             if(ticks==210)level.setBlockAndUpdate(POS.north(),Blocks.REDSTONE_BLOCK.defaultBlockState());
             if(ticks==230) {
-                check(b.getItem(0).getCount()==31,"sfm_held_redstone_only_fires_once");
+                check(b.getItem(0).getCount()-heldBaseline==1,"sfm_held_redstone_only_fires_once");
                 check(a.getItem(0).getCount()+b.getItem(0).getCount()==64,"terminal_has_no_hidden_material_loss");
                 level.setBlockAndUpdate(POS.north(),Blocks.AIR.defaultBlockState());
                 install("import A,B\nget must 1 minecraft:copper_ingot from A\nput minecraft:copper_ingot into B\ndone");
             }
-            if(ticks==231)level.setBlockAndUpdate(POS.north(),Blocks.REDSTONE_BLOCK.defaultBlockState());
-            if(ticks==232)level.setBlockAndUpdate(POS.north(),Blocks.AIR.defaultBlockState());
-            if(ticks==233){a.setItem(1,new ItemStack(Items.GOLD_INGOT));install("import A,B\nget 1 minecraft:gold_ingot from A\nput minecraft:gold_ingot into B\ndone");}
-            if(ticks==234)level.setBlockAndUpdate(POS.north(),Blocks.REDSTONE_BLOCK.defaultBlockState());
-            if(ticks==238)check(b.getItem(1).is(Items.GOLD_INGOT)&&b.getItem(1).getCount()==1&&!terminal.waitingStatus().isEmpty(),"terminal_later_task_finishes_while_first_waits_on_copper");
-            if(ticks==240) {
+            if(ticks==233) {
+                check(!terminal.waitingStatus().isEmpty() && count(a,Items.COPPER_INGOT)==0
+                        && count(b,Items.COPPER_INGOT)==0,"old_program_waits_for_copper_without_extracting");
+                a.setItem(1,new ItemStack(Items.GOLD_INGOT));
+                install("import A,B\nget 1 minecraft:gold_ingot from A\nput minecraft:gold_ingot into B\ndone");
+            }
+            if(ticks==238) {
+                check(terminal.waitingStatus().isEmpty() && count(a,Items.GOLD_INGOT)==0
+                        && count(b,Items.GOLD_INGOT)==1 && count(b,Items.COPPER_INGOT)==0,
+                        "replacement_cancels_copper_wait_and_delivers_seeded_gold_exactly_once");
+                check(count(a,Items.IRON_INGOT)+count(b,Items.IRON_INGOT)==64,"replacement_preserves_existing_iron");
+                install("import A,B\nget must 1 minecraft:copper_ingot from A\nput minecraft:copper_ingot into B\ndone");
+            }
+            if(ticks==245) {
+                check(!terminal.waitingStatus().isEmpty() && count(b,Items.GOLD_INGOT)==1,
+                        "fresh_copper_wait_exists_before_destruction_without_replaying_gold");
                 level.destroyBlock(POS,true);
                 var pos=POS.east(8);level.setChunkForced(pos.getX()>>4,pos.getZ()>>4,true);
                 level.setBlockAndUpdate(pos,FactoryContent.PROVIDER.get().defaultBlockState());dropProvider=(FactoryBlockEntity)level.getBlockEntity(pos);
@@ -86,7 +112,7 @@ public final class TerminalAudit {
                 level.setBlockAndUpdate(pos.relative(front.getOpposite()),AEBlocks.DENSE_ENERGY_CELL.block().defaultBlockState());
                 ((EnergyCellBlockEntity)level.getBlockEntity(pos.relative(front.getOpposite()))).injectAEPower(1_000_000,Actionable.MODULATE);
             }
-            if(ticks==242) {
+            if(ticks==247) {
                 check(dropped(POS,ModItems.LOOP_FACTORY_PATTERN.get())==1,"terminal_drops_its_physical_pattern_once");
                 check(dropped(POS,FactoryContent.TERMINAL_ITEM.get())==1,"terminal_block_returns_on_break");
                 check(level.getBlockEntity(POS)==null,"terminal_waiting_job_owner_is_removed");
@@ -113,6 +139,14 @@ public final class TerminalAudit {
                 finish(null);
             }
         }catch(Throwable error){finish(error);}
+    }
+    private static int count(BarrelBlockEntity chest, Item item) {
+        int total=0;
+        for(int slot=0;slot<chest.getContainerSize();slot++) {
+            var stack=chest.getItem(slot);
+            if(stack.is(item))total+=stack.getCount();
+        }
+        return total;
     }
     private static void verifyResourceCarrier(BlockPos pos) {
         var entities=level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,new net.minecraft.world.phys.AABB(pos).inflate(2));

@@ -1,6 +1,7 @@
 package com.example.ae2lightoptimizer.block;
 
 import com.example.ae2lightoptimizer.Ae2LightOptimizer;
+import com.example.ae2lightoptimizer.world.WorldSimulatorBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -42,6 +43,10 @@ public final class ModBlocks {
     public static final DeferredBlock<LoopIntegratedCpuBlock> LOOP_INTEGRATED_CPU = BLOCKS.registerBlock(
             "loop_integrated_cpu", LoopIntegratedCpuBlock::new,
             () -> BlockBehaviour.Properties.of().strength(2.2F).sound(SoundType.METAL));
+
+    public static final DeferredBlock<WorldSimulatorBlock> WORLD_SIMULATOR = BLOCKS.registerBlock(
+            "loop_world_simulator", WorldSimulatorBlock::new,
+            () -> BlockBehaviour.Properties.of().strength(3.5F).sound(SoundType.METAL).noOcclusion());
 
     private ModBlocks() {
     }

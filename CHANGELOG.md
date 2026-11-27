@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.4
+
+### English
+
+- Added the Loop World Crafting Simulator for Minecraft 1.21.1 and 26.1.2. It runs without power and does not join an ME network. It has nine item input slots, one item output, and two 8,000 mB tanks.
+- Any face accepts ingredients and allows extraction of finished products. The Active Output switch sends items and fluids to adjacent devices through the enabled faces; it does not pull ingredients. Double-right-click a fluid tank with an empty cursor to empty that tank.
+- Supports AE2 explosion and immersion recipes, including the Infinite Loop Storage Cell. With the relevant add-ons installed, the simulator also supports Just Dire Things fluid conversions, AE2 Lightning Tech strike recipes, and the Overload TNT Mysterious Cell interaction.
+- Four upgrade slots accept Acceleration Cards (20, 10, 5, 3, or 1 tick per cycle) and Capacity Cards (double each slot and tank per card). Imported recipes appear in JEI and EMI. Server owners can filter recipes by ID, namespace or recipe type.
+- Added an AE2-style vertical progress meter, an in-game GuideME page, and a gray-white case with a plain top. The front indicator lights only while crafting.
+- Fixed the Crafting Ripper failing to open with ExtendedAE Plus installed on Minecraft 1.21.1 and 26.1.2.
+- On Minecraft 26.1.2, the Loop Factory editor accepts item and fluid IDs dragged from compatible EMI builds.
+
+### 简体中文
+
+- Minecraft 1.21.1 与 26.1.2 新增循环世界合成模拟器。不接入 ME 网络，无需供电。机器有九个物品输入格、一个物品输出格和两个 8,000 mB 流体槽。
+- 六面都允许被动输入原料、抽取产物。开启主动输出后，机器从启用的面向相邻设备推送物品和流体，不会主动拉取原料。鼠标光标未携带物品时右键双击流体槽，可清空该槽。
+- 支持 AE2 爆炸与浸入配方，包括无限循环存储磁盘。安装相应附属后，还支持 Just Dire Things 流体转换、AE2 闪电科技雷劈配方，以及过载 TNT 的神秘元件反应。
+- 四个升级槽支持加速卡和容量卡。加速卡可将周期从 20 tick 缩至 10、5、3、1 tick；每张容量卡让各槽容量翻倍。可在 JEI 和 EMI 查看导入配方。服务端可按 ID、命名空间或配方类型筛选。
+- 新增 AE2 风格的竖向进度条、GuideME 游戏内机器说明和灰白素顶机壳。正面状态灯仅在加工时亮起。
+- 修复 Minecraft 1.21.1 与 26.1.2 安装 ExtendedAE Plus 后合成撕裂者无法打开的问题。
+- Minecraft 26.1.2 的循环工厂编辑器可从兼容的 EMI 版本拖入物品和流体 ID。
+
 ## 0.1.3
 
 ### English

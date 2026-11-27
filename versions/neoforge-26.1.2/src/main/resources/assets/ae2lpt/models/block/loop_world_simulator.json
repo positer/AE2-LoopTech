@@ -1,0 +1,161 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "housing": "ae2lpt:block/loop_world_simulator/housing",
+    "rail": "ae2lpt:block/loop_world_simulator/rail",
+    "display": "ae2lpt:block/loop_world_simulator/display",
+    "control": "ae2lpt:block/loop_world_simulator/control",
+    "port": "ae2lpt:block/loop_world_simulator/port",
+    "side": "ae2lpt:block/loop_world_simulator/side",
+    "base_plate": "ae2lpt:block/loop_world_simulator/base_plate",
+    "top_panel": "ae2lpt:block/loop_world_simulator/top_panel",
+    "particle": "#housing"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        4,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#base_plate"
+        },
+        "up": {
+          "texture": "#housing"
+        },
+        "north": {
+          "texture": "#control"
+        },
+        "south": {
+          "texture": "#housing"
+        },
+        "west": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        4,
+        0
+      ],
+      "to": [
+        3,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rail"
+        },
+        "north": {
+          "texture": "#rail"
+        },
+        "south": {
+          "texture": "#housing"
+        },
+        "west": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#rail"
+        }
+      }
+    },
+    {
+      "from": [
+        13,
+        4,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rail"
+        },
+        "north": {
+          "texture": "#rail"
+        },
+        "south": {
+          "texture": "#housing"
+        },
+        "west": {
+          "texture": "#rail"
+        },
+        "east": {
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        4,
+        13
+      ],
+      "to": [
+        13,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rail"
+        },
+        "north": {
+          "texture": "#rail"
+        },
+        "south": {
+          "texture": "#port"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        4,
+        1
+      ],
+      "to": [
+        13,
+        15,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#display",
+          "uv": [
+            1,
+            1,
+            15,
+            15
+          ]
+        },
+        "up": {
+          "texture": "#top_panel",
+          "uv": [
+            1,
+            1,
+            15,
+            15
+          ]
+        }
+      }
+    }
+  ]
+}

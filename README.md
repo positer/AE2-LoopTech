@@ -47,6 +47,14 @@ Both Loop Tick Accelerator forms can accelerate other accelerators. Direct input
 
 If Applied Flux is installed, each accelerator accepts one Induction Card in its dedicated upgrade slot. The accelerator draws power from the ME network and pushes Forge Energy to the adjacent machine, using only the machine face touching the green block face or the cable part's mounting face. It does not expose an FE port. Each server tick it attempts the full amount supported by the target's FE interface, with no additional limit from the card. Actual output depends on available ME power and what the machine accepts.
 
+### Loop World Crafting Simulator
+
+Its white frame matches the Supercomputing Crafting Optimizer Interface. Put world-interaction materials in the 3×3 input grid. Each tank starts at 8,000 mB. Every 20 ticks the simulator processes as many copies of the matching recipe as its input and output slots can handle. The simulator runs without power and does not join an ME network. All six sides allow passive ingredient insertion and product extraction. Turn on Active Output and choose the faces that push both items and fluids to adjacent storage; the machine does not pull ingredients. The four slots on the right accept Acceleration and Capacity Cards. Acceleration Cards reduce the cycle to 10, 5, 3 and 1 ticks. Each Capacity Card doubles the capacity of every item slot and fluid tank. Browse the imported recipes in JEI or EMI.
+
+Use TNT or Tiny TNT for ordinary explosions. Fluix Crystal recipes move 1,000 mB of water per operation into the output tank along with their item result. With Just Dire Things installed, fluid-drop recipes convert each 1,000 mB of source fluid into the recipe's target fluid. With AE2 Lightning Tech installed, a Lightning Rod enables strike recipes. Overload TNT uses its own Mysterious Cell recipe.
+
+In a crafting table, put iron ingots in the corners, a Loop Crystal at top center, a Formation Plane and Annihilation Plane on the middle sides, a 4k Loop Storage Core in the center, and a Cell Workbench at bottom center. Server owners can select imported recipes in the [simulator configuration](docs/world-simulator.md).
+
 ### Programmable Loop Factory
 
 A Blank Pattern and one Loop Crystal Powder make a Loop Factory Pattern. One Quartz Fiber, four iron ingots and two powder make eight Interface Cables. Both recipes are shapeless.
@@ -144,6 +152,14 @@ END
 方块和线缆部件都可加速其他进刻器。多台对准同一目标时，追加次数相加；串联时，每次额外激活仍按下游进刻器设置的倍率执行。链条遇到当前路径中已激活的进刻器会截断该回环。为防止极端布线拖垮服务器，每次初始激活最多执行 8,192 个目标步骤；这不限制感应卡的 FE 输出。
 
 装有 Applied Flux 时，两种进刻器各有一个专用感应卡槽。装卡后，进刻器从 ME 网络取电，并主动向绿色面或部件安装面所朝向的相邻机器输出 FE，只使用机器与进刻器相接的一面。进刻器不对外暴露 FE 端口。每个服务器 tick 都按目标 FE 接口所支持的最大量尝试输出，感应卡不额外限流；实际输出取决于 ME 网络可供电量和目标机器接收量。
+
+### 循环世界合成模拟器
+
+机身白框与超算合成优化接口采用同一套配色。把世界交互配方的原料放入九宫格。输入和输出流体槽初始各容纳 8,000 mB。机器默认每 20 tick 结算一次，按原料和输出剩余空间做尽可能多份。模拟器不加入 ME 网络，也不需要 AE 或 FE 供电。六个面都只允许被动插入原料和抽取产物，不会主动拉取原料。左侧主动输出只有开和关；开启后，每轮都会从已启用的面尝试推送物品和流体，未被相邻设备接收的产物留在输出槽。右侧四个升级槽接受加速卡和容量卡。加速卡依次把周期缩短到 10、5、3、1 tick。每张容量卡让每个物品槽和流体槽的容量翻倍。JEI 和 EMI 可查看导入的配方。
+
+普通爆炸使用 TNT 或迷你 TNT。每份福鲁伊克斯水晶浸入配方将 1,000 mB 水等量转移至输出槽。安装 Just Dire Things 后，可以按其丢入流体配方将每份 1,000 mB 源流体转换为目标流体。安装应用能源闪电科技后，放入避雷针即可运行雷劈配方，过载 TNT 则有专属的神秘元件配方。
+
+工作台四角放铁锭，上中放循环水晶，中排从左到右放放置面板、4k 循环存储核心、破坏面板，下中放元件工作台。服务端可用[模拟器配置](docs/world-simulator.md)筛选导入的配方。
 
 ### 可编程循环工厂
 
